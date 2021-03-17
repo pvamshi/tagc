@@ -29,14 +29,14 @@ describe("parser.ts", () => {
   });
 
   test("`parseLine` should parse line type", () => {
-    expect(parseLine(`- this is a list`, 0)).toEqual({
+    expect(parseLine(`- this is a list +tag #tag2`, 0)).toEqual({
       startIndex: 0,
       endIndex: 0,
       spaces: 0,
       task: false,
       type: "LIST",
       done: true,
-      tags: {},
+      tags: { hashtag: ["tag2"], includeTag: ["tag"] },
     });
   });
 
@@ -258,24 +258,75 @@ line10`.split("\n"),
     );
     expect(temp).toEqual(
       `line 0
-
 merge text1
+---
 line 1
 line2
 line3
 line4
 line5
-
 merge text 2
+---
 line6
 line7
 line8
-
 merge text 3
+---
 line9
 line10
+`
+    );
+  });
+  test("if integrating all will work the magic", () => {
+    const file1 = `
+- line 1
+- line 2
+- line 3 +tag1
+- line 4
+- line 5 +tag2
+- line 6
+- line 7
+`;
+    const file2 = `
+- line merge text 1
+- line merge text 2 #tag1
+- line merge text 3 
+- line merge text 4 #tag1
+- line merge text 5 
+- line merge text 6 #tag2
+- line merge text 7
+`;
+    const blocks = file1.split("\n").map(parseLine);
+    const blocks2 = file2.split("\n").map(parseLine);
+    const temp = blocks.filter(
+      (block) => block.tags.includeTag && block.tags.includeTag.length > 0
+    );
+    const positions = temp.map(({ startIndex }) => startIndex);
+    console.log({ positions });
+    const texts = temp.map((block) =>
+      getBlocksForTag(
+        file2.split("\n"),
+        blocks2,
+        block.tags.includeTag[0]
+      ).join("\n")
+    );
+    const final = mergeText(file1.split("\n"), texts, positions);
+    expect(final).toEqual(
+      `
+- line 1
+- line 2
+- line 3 +tag1
+- line merge text 2 #tag1
+- line merge text 4 #tag1
+---
+- line 4
+- line 5 +tag2
+- line merge text 6 #tag2
+---
+- line 6
+- line 7
 
----`
+`
     );
   });
 });

@@ -56,8 +56,8 @@
 	- [ ] collect tags and update 
 		- [x] Tags grouping 
 		- [x] Blocks line number 
-		- [ ] Collect blocks for tags
-		- [ ] Collect text 
+		- [x] Collect blocks for tags
+		- [x] Collect text 
 		- [ ] Update file with new text
 	- [ ] Database
 		- [ ] Setup db

@@ -124,7 +124,7 @@ export function mergeText(
     .map(([start, end]) => source.slice(start, end).join("\n"))
     .map(
       (sourceChunk, index, arr) =>
-        sourceChunk + "\n\n" + (index + 1 === arr.length ? "---" : texts[index])
+        sourceChunk + "\n" + (index + 1 === arr.length ? "" : texts[index])
     )
-    .join("\n");
+    .join("\n---\n");
 }
