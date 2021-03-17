@@ -1,6 +1,7 @@
 import hashtag from "./lib/hashtags";
 import linetype from "./lib/linetype";
 import nearley from "nearley";
+import { assert } from "node:console";
 export type BlockType = "LIST" | "TEXT";
 
 export interface Block {
@@ -100,4 +101,30 @@ export function getBlocksForTag(
     .map(({ startIndex, endIndex }) =>
       lines.slice(startIndex, endIndex + 1).join("\n")
     );
+}
+
+export function mergeText(
+  source: string[],
+  texts: string[],
+  positions: number[]
+) {
+  if (texts.length !== positions.length && texts.length === 0) {
+    throw new Error(
+      "Wrong set of input for merging text, all should be of same size and greater than zero"
+    );
+  }
+  return [
+    [0, positions[0] + 1],
+    ...positions.map((start, index, arr) =>
+      index + 1 === arr.length
+        ? [start + 1, source.length]
+        : [start + 1, arr[index + 1] + 1]
+    ),
+  ]
+    .map(([start, end]) => source.slice(start, end).join("\n"))
+    .map(
+      (sourceChunk, index, arr) =>
+        sourceChunk + "\n\n" + (index + 1 === arr.length ? "---" : texts[index])
+    )
+    .join("\n");
 }

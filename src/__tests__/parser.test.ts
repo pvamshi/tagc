@@ -5,6 +5,7 @@ import {
   parseLine,
   parseTags,
   removeDuplicates,
+  mergeText,
 } from "../parser";
 describe("parser.ts", () => {
   // TODO: Check if the order is fixed or random
@@ -238,5 +239,43 @@ line 7 #tag1`,
       `line 7 #tag1`,
       `line 8 #tag1`,
     ]);
+  });
+  test("`mergeText` to merge two text array blocks", () => {
+    const temp = mergeText(
+      `line 0
+line 1
+line2
+line3
+line4
+line5
+line6
+line7
+line8
+line9
+line10`.split("\n"),
+      ["merge text1", "merge text 2", "merge text 3"],
+      [0, 5, 8]
+    );
+    expect(temp).toEqual(
+      `line 0
+
+merge text1
+line 1
+line2
+line3
+line4
+line5
+
+merge text 2
+line6
+line7
+line8
+
+merge text 3
+line9
+line10
+
+---`
+    );
   });
 });
