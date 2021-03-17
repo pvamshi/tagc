@@ -7,7 +7,8 @@
     "start": "npm run build:live",
     "build": "tsc -p .",
     "build:live": "nodemon -q --watch 'src/**/*.ts' --exec \"ts-node\" src/index.ts",
-    "test": "jest",
+    "test:all": "jest",
+    "test": "jest --watch",
     "compile": "concurrently \"nearleyc src/lib/hashtags.ne > src/lib/hashtags.ts\" \"nearleyc src/lib/linetype.ne > src/lib/linetype.ts \""
   },
   "repository": {
@@ -34,5 +35,6 @@
     "ts-jest": "^26.5.3",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
-  }
+  },
+  "dependencies": {}
 }
