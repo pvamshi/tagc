@@ -84,3 +84,20 @@ export function getLastIndex(
   }
   return lines.length;
 }
+
+export function getBlocksForTag(
+  lines: string[],
+  blocks: Block[],
+  includeTag: string
+): string[] {
+  return blocks
+    .filter(
+      (block) =>
+        block.tags.hashtag &&
+        block.tags.hashtag.length > 0 &&
+        block.tags.hashtag.includes(includeTag)
+    )
+    .map(({ startIndex, endIndex }) =>
+      lines.slice(startIndex, endIndex + 1).join("\n")
+    );
+}

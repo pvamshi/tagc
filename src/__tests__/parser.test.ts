@@ -1,4 +1,6 @@
 import {
+  getBlocksForTag,
+  Block,
   getLastIndex,
   parseLine,
   parseTags,
@@ -141,5 +143,100 @@ describe("parser.ts", () => {
     expect(lines[0].endIndex).toBe(3);
     expect(lines[1].endIndex).toBe(1);
     expect(lines[3].endIndex).toBe(3);
+  });
+  test("getBlocksForTag should give correct text snips", () => {
+    const lines = `line 1
+line2
+line 3 #tag1
+line 4 #tag2
+line 5 
+line 6
+line 7 #tag1
+line 8 #tag1`;
+    const blocks: Block[] = [
+      {
+        startIndex: 0,
+        endIndex: 0,
+        type: "LIST",
+        tags: {},
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+      {
+        startIndex: 1,
+        endIndex: 1,
+        type: "LIST",
+        tags: {},
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+      {
+        startIndex: 2,
+        endIndex: 6,
+        type: "LIST",
+        tags: { hashtag: ["tag1"] },
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+      {
+        startIndex: 3,
+        endIndex: 4,
+        type: "LIST",
+        tags: { hashtag: ["tag2"] },
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+      {
+        startIndex: 4,
+        endIndex: 4,
+        type: "LIST",
+        tags: {},
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+      {
+        startIndex: 5,
+        endIndex: 5,
+        type: "LIST",
+        tags: {},
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+      {
+        startIndex: 6,
+        endIndex: 6,
+        type: "LIST",
+        tags: { hashtag: ["tag1"] },
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+      {
+        startIndex: 7,
+        endIndex: 7,
+        type: "LIST",
+        tags: { hashtag: ["tag1"] },
+        done: false,
+        spaces: 0,
+        task: true,
+      },
+    ];
+    const result = getBlocksForTag(lines.split("\n"), blocks, "tag1");
+
+    expect(result).toEqual([
+      `line 3 #tag1
+line 4 #tag2
+line 5 
+line 6
+line 7 #tag1`,
+      `line 7 #tag1`,
+      `line 8 #tag1`,
+    ]);
   });
 });
