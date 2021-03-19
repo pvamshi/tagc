@@ -6,6 +6,9 @@ import {
   parseTags,
   removeDuplicates,
   mergeText,
+  getUpdatedText,
+  getTargetBlocksType,
+  getTargetBlocks,
 } from "../parser";
 describe("parser.ts", () => {
   // TODO: Check if the order is fixed or random
@@ -41,7 +44,12 @@ describe("parser.ts", () => {
   });
 
   test("get blocks", () => {
-    let lines = [
+    let lines: {
+      type: "LIST";
+      startIndex: number;
+      endIndex: number;
+      spaces: number;
+    }[] = [
       {
         startIndex: 0,
         endIndex: 0,
@@ -108,7 +116,12 @@ describe("parser.ts", () => {
     expect(lines[3].endIndex).toBe(4);
   });
   test("get list tree when indentation is odd", () => {
-    const lines = [
+    const lines: {
+      type: "LIST";
+      startIndex: number;
+      endIndex: number;
+      spaces: number;
+    }[] = [
       {
         startIndex: 0,
         endIndex: 0,
@@ -296,21 +309,7 @@ line10
 - line merge text 6 #tag2
 - line merge text 7
 `;
-    const blocks = file1.split("\n").map(parseLine);
-    const blocks2 = file2.split("\n").map(parseLine);
-    const temp = blocks.filter(
-      (block) => block.tags.includeTag && block.tags.includeTag.length > 0
-    );
-    const positions = temp.map(({ startIndex }) => startIndex);
-    console.log({ positions });
-    const texts = temp.map((block) =>
-      getBlocksForTag(
-        file2.split("\n"),
-        blocks2,
-        block.tags.includeTag[0]
-      ).join("\n")
-    );
-    const final = mergeText(file1.split("\n"), texts, positions);
+    const final = getUpdatedText(file1, file2);
     expect(final).toEqual(
       `
 - line 1
@@ -328,5 +327,132 @@ line10
 
 `
     );
+  });
+  describe("`getTargetBlocks` should give targetblock for a text", () => {
+    test("for start block", () => {
+      const result = getTargetBlocksType("[index](index.md)");
+      expect(result).toEqual({
+        type: "start",
+        value: { name: "index", path: "index.md" },
+      });
+    });
+    test("for end block", () => {
+      const resultForEnd = getTargetBlocksType(
+        "-asdfsdfasdf asd saf asdfs.asdf asd@*&^*@$#@ ::asf234sdf534sdsd::"
+      );
+      expect(resultForEnd).toEqual({
+        type: "end",
+        value: {
+          id: "asf234sdf534sdsd",
+          text: "-asdfsdfasdf asd saf asdfs.asdf asd@*&^*@$#@ ",
+        },
+      });
+    });
+
+    test("get the blocks: happy path", () => {
+      const result = getTargetBlocks([
+        "some text",
+        "[index](index.md)",
+        "sdfasf",
+        "asdsfdasdf",
+        "asdfsdfsd::sfds::",
+      ]);
+      expect(result.map(([start, end]) => [start.index, end.index])).toEqual([
+        [1, 4],
+      ]);
+    });
+    test("get the blocks: multiple happy path", () => {
+      const result = getTargetBlocks([
+        "some text",
+        "[index](index.md)",
+        "sdfasf",
+        "asdsfdasdf",
+        "asdfsdfsd::sfds::",
+        "some text",
+        "some text",
+        "some text",
+        "some text",
+        "[index](index.md)",
+        "sdfasf",
+        "asdsfdasdf",
+        "asdfsdfsd::sfds::",
+        "some text",
+        "some text",
+        "some text",
+      ]);
+      expect(result.map(([start, end]) => [start.index, end.index])).toEqual([
+        [1, 4],
+        [9, 12],
+      ]);
+    });
+    test("get the blocks: multiple unhappy path", () => {
+      const result = getTargetBlocks([
+        "some text",
+        "[index](index.md)",
+        "sdfasf",
+        "asdsfdasdf",
+        "asdfsdfsd::sfds::",
+        "some text",
+        "[index](index.md)",
+        "some text",
+        "some text",
+        "some text",
+        "[index](index.md)",
+        "sdfasf",
+        "asdsfdasdf",
+        "asdfsdfsd::sfds::",
+        "some text",
+        "some text",
+        "some text",
+      ]);
+      expect(result.map(([start, end]) => [start.index, end.index])).toEqual([
+        [1, 4],
+        [10, 13],
+      ]);
+    });
+  });
+
+  test("debugging getLastIndex", () => {
+    const blocks: Block[] = [
+      {
+        startIndex: 0,
+        endIndex: 0,
+        tags: {},
+        type: "LIST",
+        task: false,
+        done: true,
+        spaces: 0,
+      },
+      {
+        startIndex: 1,
+        endIndex: 1,
+        tags: {},
+        type: "LIST",
+        task: false,
+        done: true,
+        spaces: 0,
+      },
+      {
+        startIndex: 2,
+        endIndex: 2,
+        tags: {},
+        type: "LIST",
+        task: false,
+        done: true,
+        spaces: 2,
+      },
+      {
+        startIndex: 3,
+        endIndex: 3,
+        tags: {},
+        type: "LIST",
+        task: false,
+        done: true,
+        spaces: 0,
+      },
+    ];
+    getLastIndex(blocks, 0);
+    console.log({ blocks });
+    expect(blocks[1].endIndex).toBe(2);
   });
 });

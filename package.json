@@ -9,7 +9,7 @@
     "build:live": "nodemon -q --watch 'src/**/*.ts' --exec \"ts-node\" src/index.ts",
     "test:all": "jest",
     "test": "jest --watch",
-    "compile": "concurrently \"nearleyc src/lib/hashtags.ne > src/lib/hashtags.ts\" \"nearleyc src/lib/linetype.ne > src/lib/linetype.ts \""
+    "compile": "concurrently  \"nearleyc src/lib/hashtags.ne > src/lib/hashtags.ts\" \"nearleyc src/lib/linetype.ne > src/lib/linetype.ts \" \"nearleyc src/lib/target.ne > src/lib/target.ts\""
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,7 @@
   "homepage": "https://github.com/pvamshi/tagc#readme",
   "devDependencies": {
     "@types/jest": "^26.0.20",
+    "@types/lokijs": "^1.5.3",
     "@types/nearley": "^2.11.1",
     "@types/node": "^14.14.35",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
@@ -36,5 +37,9 @@
     "ts-node": "^9.1.1",
     "typescript": "^4.2.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lokijs": "^1.5.11",
+    "mongoose": "^5.12.1",
+    "nanoid": "^3.1.22"
+  }
 }

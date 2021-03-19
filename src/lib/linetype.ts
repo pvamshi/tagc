@@ -49,13 +49,13 @@ const grammar: Grammar = {
     {"name": "LIST$string$1", "symbols": [{"literal":" "}, {"literal":"["}, {"literal":" "}, {"literal":"]"}], "postprocess": (d) => d.join('')},
     {"name": "LIST$ebnf$2", "symbols": []},
     {"name": "LIST$ebnf$2", "symbols": ["LIST$ebnf$2", /[\S ]/], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "LIST", "symbols": ["LIST$ebnf$1", /[-*]/, "LIST$string$1", "_", "LIST$ebnf$2"], "postprocess": d => ({type: 'LIST', task:true, done: false,spaces: d[0].length})},
+    {"name": "LIST", "symbols": ["LIST$ebnf$1", /[-*]/, "LIST$string$1", "_", "LIST$ebnf$2"], "postprocess": d => ({type: 'LIST', task:true, done: false,spaces: d[0].length>0 ? d[0].length * d[0][0].size: 0})},
     {"name": "LIST$ebnf$3", "symbols": []},
     {"name": "LIST$ebnf$3", "symbols": ["LIST$ebnf$3", "_"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "LIST$string$2", "symbols": [{"literal":" "}, {"literal":"["}], "postprocess": (d) => d.join('')},
     {"name": "LIST$ebnf$4", "symbols": []},
     {"name": "LIST$ebnf$4", "symbols": ["LIST$ebnf$4", /[\S ]/], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "LIST", "symbols": ["LIST$ebnf$3", /[-*]/, "LIST$string$2", /[xX]/, {"literal":"]"}, "_", "LIST$ebnf$4"], "postprocess": d => ({type: 'LIST', task:true, done: true,spaces: d[0].length})},
+    {"name": "LIST", "symbols": ["LIST$ebnf$3", /[-*]/, "LIST$string$2", /[xX]/, {"literal":"]"}, "_", "LIST$ebnf$4"], "postprocess": d => ({type: 'LIST', task:true, done: true,spaces:  d[0].length>0 ? d[0].length * d[0][0].size: 0 })},
     {"name": "LIST$ebnf$5", "symbols": []},
     {"name": "LIST$ebnf$5", "symbols": ["LIST$ebnf$5", "_"], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "LIST$ebnf$6", "symbols": []},
@@ -65,9 +65,10 @@ const grammar: Grammar = {
         if(text.startsWith('[ ]') || text.startsWith('[x]')){
         							return r;
         						 }						
-        return {type: 'LIST', task:false, done: true,spaces: d[0].length};
+        return {type: 'LIST', task:false, done: true,spaces:  d[0].length>0 ? d[0].length * d[0][0].size: 0 };
         					} },
-    {"name": "_", "symbols": [{"literal":" "}], "postprocess": d => ({type:"space"})}
+    {"name": "_", "symbols": [{"literal":" "}], "postprocess": d => ({type:"space", size:1})},
+    {"name": "_", "symbols": [{"literal":"\t"}], "postprocess": d => ({type:"space", size:2})}
   ],
   ParserStart: "MAIN",
 };
