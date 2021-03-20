@@ -90,28 +90,46 @@ export function getLastIndex(
   return lines.length;
 }
 
+function getSpacesForText(blocks: Block[], index: number): number {
+  if (index === 0) {
+    return 0;
+  }
+  for (let i = index - 1; i > 0; i--) {
+    if (blocks[i].type === "LIST") {
+      return blocks[i].spaces;
+    }
+  }
+  return 0;
+}
 export function getBlocks(fileText: string): Block[] {
   const blocks = fileText
     .split("\n")
     .map(parseLine)
-    .map((block, index, arr) => {
-      console.log({ block });
-      if (block && block.type === "TEXT" && index != 0) {
-        let i = index;
-        while (i > 0) {
-          if (arr[i - i].type === "LIST") {
-            block.spaces = arr[i - 1].spaces;
-            console.log({ block });
-            return block;
-          }
-          i = i - 1;
-        }
+    .map((block, index, blocks) => {
+      if (block.type === "TEXT") {
+        block.spaces = getSpacesForText(blocks, index);
       }
-      block.spaces = 0;
-      console.log({ block });
       return block;
     });
+  // .map((block, index, arr) => {
+  //   console.log({ block });
+  //   if (block && block.type === "TEXT" && index != 0) {
+  //     let i = index;
+  //     while (i > 0) {
+  //       if (arr[i - i].type === "LIST") {
+  //         block.spaces = arr[i - 1].spaces;
+  //         console.log({ block });
+  //         return block;
+  //       }
+  //       i = i - 1;
+  //     }
+  //   }
+  //   block.spaces = 0;
+  //   console.log({ block });
+  //   return block;
+  // });
   getLastIndex(blocks, 0);
+  console.log(blocks);
   return blocks
     .filter(
       (block) =>
