@@ -111,25 +111,7 @@ export function getBlocks(fileText: string): Block[] {
       }
       return block;
     });
-  // .map((block, index, arr) => {
-  //   console.log({ block });
-  //   if (block && block.type === "TEXT" && index != 0) {
-  //     let i = index;
-  //     while (i > 0) {
-  //       if (arr[i - i].type === "LIST") {
-  //         block.spaces = arr[i - 1].spaces;
-  //         console.log({ block });
-  //         return block;
-  //       }
-  //       i = i - 1;
-  //     }
-  //   }
-  //   block.spaces = 0;
-  //   console.log({ block });
-  //   return block;
-  // });
   getLastIndex(blocks, 0);
-  console.log(blocks);
   return blocks
     .filter(
       (block) =>

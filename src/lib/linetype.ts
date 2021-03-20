@@ -37,9 +37,11 @@ const grammar: Grammar = {
     {"name": "MAIN", "symbols": ["LIST"], "postprocess": d =>d[0]},
     {"name": "MAIN", "symbols": ["PARAGRAPH"], "postprocess": d =>d[0]},
     {"name": "PARAGRAPH$ebnf$1", "symbols": []},
-    {"name": "PARAGRAPH$ebnf$1", "symbols": ["PARAGRAPH$ebnf$1", /[\S ]/], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "PARAGRAPH", "symbols": ["PARAGRAPH$ebnf$1"], "postprocess": (d,l,r)=>{
-        	const text = d[0].join('').trim();
+    {"name": "PARAGRAPH$ebnf$1", "symbols": ["PARAGRAPH$ebnf$1", "_"], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "PARAGRAPH$ebnf$2", "symbols": []},
+    {"name": "PARAGRAPH$ebnf$2", "symbols": ["PARAGRAPH$ebnf$2", /[\S ]/], "postprocess": (d) => d[0].concat([d[1]])},
+    {"name": "PARAGRAPH", "symbols": ["PARAGRAPH$ebnf$1", "PARAGRAPH$ebnf$2"], "postprocess": (d,l,r)=>{
+        	const text = d[1].join('').trim();
         	
         	if(text.startsWith('- ') ){return r}
         	return {type:"TEXT" };

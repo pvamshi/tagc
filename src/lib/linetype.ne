@@ -2,8 +2,8 @@
 @preprocessor typescript
 
 MAIN -> LIST {% d =>d[0] %} | PARAGRAPH {% d =>d[0] %}
-PARAGRAPH -> [\S ]:* {%(d,l,r)=>{
-	const text = d[0].join('').trim();
+PARAGRAPH -> _:* [\S ]:* {%(d,l,r)=>{
+	const text = d[1].join('').trim();
 	
 	if(text.startsWith('- ') ){return r}
 	return {type:"TEXT" };

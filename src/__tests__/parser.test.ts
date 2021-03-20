@@ -14,7 +14,11 @@ describe("parser.ts", () => {
   // TODO: Check if the order is fixed or random
   it("should parse hashtags", () => {
     const hashtags = parseTags("# a simple #text with lot of #hashtags");
-    expect(hashtags).toEqual({ hashtag: ["hashtags", "text"] });
+    expect(hashtags).toEqual({
+      excludeTag: [],
+      hashtag: ["text", "hashtags"],
+      includeTag: [],
+    });
   });
   it("should parse excludeTags and includeTags", () => {
     const hashtags = parseTags(
@@ -22,8 +26,8 @@ describe("parser.ts", () => {
     );
     expect(hashtags).toEqual({
       excludeTag: ["header"],
-      hashtag: ["text", "hashtags"],
-      includeTag: ["todo", "text"],
+      hashtag: ["hashtags", "text"],
+      includeTag: ["text", "todo"],
     });
   });
 
@@ -39,7 +43,7 @@ describe("parser.ts", () => {
       task: false,
       type: "LIST",
       done: true,
-      tags: { hashtag: ["tag2"], includeTag: ["tag"] },
+      tags: { hashtag: ["tag2"], includeTag: ["tag"], excludeTag: [] },
     });
   });
 
@@ -172,7 +176,7 @@ line 8 #tag1`;
         startIndex: 0,
         endIndex: 0,
         type: "LIST",
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -181,7 +185,7 @@ line 8 #tag1`;
         startIndex: 1,
         endIndex: 1,
         type: "LIST",
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -190,7 +194,7 @@ line 8 #tag1`;
         startIndex: 2,
         endIndex: 6,
         type: "LIST",
-        tags: { hashtag: ["tag1"] },
+        tags: { hashtag: ["tag1"], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -199,7 +203,7 @@ line 8 #tag1`;
         startIndex: 3,
         endIndex: 4,
         type: "LIST",
-        tags: { hashtag: ["tag2"] },
+        tags: { hashtag: ["tag2"], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -208,7 +212,7 @@ line 8 #tag1`;
         startIndex: 4,
         endIndex: 4,
         type: "LIST",
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -217,7 +221,7 @@ line 8 #tag1`;
         startIndex: 5,
         endIndex: 5,
         type: "LIST",
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -226,7 +230,7 @@ line 8 #tag1`;
         startIndex: 6,
         endIndex: 6,
         type: "LIST",
-        tags: { hashtag: ["tag1"] },
+        tags: { hashtag: ["tag1"], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -235,7 +239,7 @@ line 8 #tag1`;
         startIndex: 7,
         endIndex: 7,
         type: "LIST",
-        tags: { hashtag: ["tag1"] },
+        tags: { hashtag: ["tag1"], includeTag: [], excludeTag: [] },
         done: false,
         spaces: 0,
         task: true,
@@ -272,19 +276,16 @@ line10`.split("\n"),
     expect(temp).toEqual(
       `line 0
 merge text1
----
 line 1
 line2
 line3
 line4
 line5
 merge text 2
----
 line6
 line7
 line8
 merge text 3
----
 line9
 line10
 `
@@ -317,11 +318,9 @@ line10
 - line 3 +tag1
 - line merge text 2 #tag1
 - line merge text 4 #tag1
----
 - line 4
 - line 5 +tag2
 - line merge text 6 #tag2
----
 - line 6
 - line 7
 
@@ -417,7 +416,7 @@ line10
       {
         startIndex: 0,
         endIndex: 0,
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         type: "LIST",
         task: false,
         done: true,
@@ -426,7 +425,7 @@ line10
       {
         startIndex: 1,
         endIndex: 1,
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         type: "LIST",
         task: false,
         done: true,
@@ -435,7 +434,7 @@ line10
       {
         startIndex: 2,
         endIndex: 2,
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         type: "LIST",
         task: false,
         done: true,
@@ -444,7 +443,7 @@ line10
       {
         startIndex: 3,
         endIndex: 3,
-        tags: {},
+        tags: { hashtag: [], includeTag: [], excludeTag: [] },
         type: "LIST",
         task: false,
         done: true,
