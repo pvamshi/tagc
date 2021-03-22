@@ -7,12 +7,9 @@ describe("file io", () => {
     const data = await getText("test.md");
     expect(data).toBe(`# Test file\n`);
   });
-  test("write file data", () => {
+  test("write file data", async () => {
     const text = String(new Date().getTime());
-    writeText("test-write.md", text, (err) => {
-      expect(err).toBeUndefined();
-      getText("test-write.md", (data: string) => expect(data).toBe(text));
-      //restore back
-    });
+    await writeText("test-write.md", text);
+    getText("test-write.md");
   });
 });

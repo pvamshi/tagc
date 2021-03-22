@@ -6,7 +6,6 @@ import {
   parseTags,
   removeDuplicates,
   mergeText,
-  getUpdatedText,
   getTargetBlocksType,
   getTargetBlocks,
 } from "../parser";
@@ -257,6 +256,7 @@ line 7 #tag1`,
       `line 8 #tag1`,
     ]);
   });
+
   test("`mergeText` to merge two text array blocks", () => {
     const temp = mergeText(
       `line 0
@@ -271,13 +271,17 @@ line8
 line9
 line10`.split("\n"),
       ["merge text1", "merge text 2", "merge text 3"],
-      [0, 5, 8]
+      [
+        [3, 3],
+        [6, 6],
+        [9, 9],
+      ]
     );
     expect(temp).toEqual(
       `line 0
-merge text1
 line 1
 line2
+merge text1
 line3
 line4
 line5
@@ -291,45 +295,81 @@ line10
 `
     );
   });
-  test("if integrating all will work the magic", () => {
-    const file1 = `
-- line 1
-- line 2
-- line 3 +tag1
-- line 4
-- line 5 +tag2
-- line 6
-- line 7
-`;
-    const file2 = `
-- line merge text 1
-- line merge text 2 #tag1
-- line merge text 3 
-- line merge text 4 #tag1
-- line merge text 5 
-- line merge text 6 #tag2
-- line merge text 7
-`;
-    const final = getUpdatedText(file1, file2);
-    expect(final).toEqual(
-      `
-- line 1
-- line 2
-- line 3 +tag1
-- line merge text 2 #tag1
-- line merge text 4 #tag1
-- line 4
-- line 5 +tag2
-- line merge text 6 #tag2
-- line 6
-- line 7
-
+  test("`mergeText` to merge two text array blocks with existing elements", () => {
+    const temp = mergeText(
+      `line 0
+line 1
+line2
+line3
+line4
+line5
+line6
+line7
+line8
+line9
+line10`.split("\n"),
+      ["merge text1", "merge text 2", "merge text 3"],
+      [
+        [3, 5],
+        [6, 6],
+        [9, 9],
+      ]
+    );
+    expect(temp).toEqual(
+      `line 0
+line 1
+line2
+merge text1
+line5
+merge text 2
+line6
+line7
+line8
+merge text 3
+line9
+line10
 `
     );
   });
+  //   test("if integrating all will work the magic", () => {
+  //     const file1 = `
+  // - line 1
+  // - line 2
+  // - line 3 +tag1
+  // - line 4
+  // - line 5 +tag2
+  // - line 6
+  // - line 7
+  // `;
+  //     const file2 = `
+  // - line merge text 1
+  // - line merge text 2 #tag1
+  // - line merge text 3
+  // - line merge text 4 #tag1
+  // - line merge text 5
+  // - line merge text 6 #tag2
+  // - line merge text 7
+  // `;
+  //     const final = getUpdatedText(file1, file2);
+  //     expect(final).toEqual(
+  //       `
+  // - line 1
+  // - line 2
+  // - line 3 +tag1
+  // - line merge text 2 #tag1
+  // - line merge text 4 #tag1
+  // - line 4
+  // - line 5 +tag2
+  // - line merge text 6 #tag2
+  // - line 6
+  // - line 7
+
+  // `
+  //     );
+  //   });
   describe("`getTargetBlocks` should give targetblock for a text", () => {
     test("for start block", () => {
-      const result = getTargetBlocksType("[index](index.md)");
+      const result = getTargetBlocksType("[index](index.md) ---");
       expect(result).toEqual({
         type: "start",
         value: { name: "index", path: "index.md" },
@@ -337,13 +377,12 @@ line10
     });
     test("for end block", () => {
       const resultForEnd = getTargetBlocksType(
-        "-asdfsdfasdf asd saf asdfs.asdf asd@*&^*@$#@ ::asf234sdf534sdsd::"
+        "-asdfsdfasdf asd saf asdfs.asdf asd@*&^*@$#@ ::asf234sdf534sdsd:: ---"
       );
       expect(resultForEnd).toEqual({
         type: "end",
         value: {
           id: "asf234sdf534sdsd",
-          text: "-asdfsdfasdf asd saf asdfs.asdf asd@*&^*@$#@ ",
         },
       });
     });
@@ -351,10 +390,10 @@ line10
     test("get the blocks: happy path", () => {
       const result = getTargetBlocks([
         "some text",
-        "[index](index.md)",
+        "[index](index.md) ---",
         "sdfasf",
         "asdsfdasdf",
-        "asdfsdfsd::sfds::",
+        "asdfsdfsd::sfds:: ---",
       ]);
       expect(result.map(([start, end]) => [start.index, end.index])).toEqual([
         [1, 4],
@@ -363,18 +402,18 @@ line10
     test("get the blocks: multiple happy path", () => {
       const result = getTargetBlocks([
         "some text",
-        "[index](index.md)",
+        "[index](index.md) ---",
         "sdfasf",
         "asdsfdasdf",
-        "asdfsdfsd::sfds::",
+        "asdfsdfsd::sfds:: ---",
         "some text",
         "some text",
         "some text",
         "some text",
-        "[index](index.md)",
+        "[index](index.md) ---",
         "sdfasf",
         "asdsfdasdf",
-        "asdfsdfsd::sfds::",
+        "asdfsdfsd::sfds:: ---",
         "some text",
         "some text",
         "some text",
@@ -387,19 +426,19 @@ line10
     test("get the blocks: multiple unhappy path", () => {
       const result = getTargetBlocks([
         "some text",
-        "[index](index.md)",
+        "[index](index.md) ---",
         "sdfasf",
         "asdsfdasdf",
-        "asdfsdfsd::sfds::",
+        "asdfsdfsd::sfds:: ---",
         "some text",
         "[index](index.md)",
         "some text",
         "some text",
         "some text",
-        "[index](index.md)",
+        "[index](index.md) ---",
         "sdfasf",
         "asdsfdasdf",
-        "asdfsdfsd::sfds::",
+        "asdfsdfsd::sfds:: ---",
         "some text",
         "some text",
         "some text",
@@ -407,6 +446,21 @@ line10
       expect(result.map(([start, end]) => [start.index, end.index])).toEqual([
         [1, 4],
         [10, 13],
+      ]);
+    });
+    test("get the blocks: same line happy path", () => {
+      const result = getTargetBlocks([
+        "some text",
+        " asdfs dfasdfd    [index](index.md) ::sfds:: ===",
+        "sdfasf",
+        "asdsfdasdf",
+        "asdfsdfsd",
+        "some text",
+        "some text",
+        "some text",
+      ]);
+      expect(result.map(([start, end]) => [start.index, end.index])).toEqual([
+        [1, 1],
       ]);
     });
   });
@@ -451,7 +505,6 @@ line10
       },
     ];
     getLastIndex(blocks, 0);
-    console.log({ blocks });
     expect(blocks[1].endIndex).toBe(2);
   });
 });

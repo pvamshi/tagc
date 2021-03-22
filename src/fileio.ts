@@ -6,16 +6,6 @@ export async function getText(file: string) {
   return await fsPromises.readFile(fullPath(file), "utf8");
 }
 
-export function writeText(
-  file: string,
-  content: string,
-  onDone: (err?: Error) => void
-) {
-  fs.writeFile(fullPath(file), content, (err) => {
-    if (err) {
-      console.error(err);
-      onDone(err);
-    }
-    onDone();
-  });
+export async function writeText(file: string, content: string) {
+  await fsPromises.writeFile(fullPath(file), content);
 }
