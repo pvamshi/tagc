@@ -1,70 +1,70 @@
 ## Features
 
-- Add tags anywhere in the markdown*
-- Viewport features*
-	- We can update from the viewport and the original page is updated
-	- Use + or - with tags and load all the tags data
-		- Filter based on + tags*
-		- Filter based in - tags
-		- Ability to filter based on `and` or `OR`
-		- Order of importance
-	- Give link to original 
+- Add tags anywhere in the markdown\*
+- Viewport features\*
+  - We can update from the viewport and the original page is updated
+  - Use + or - with tags and load all the tags data
+    - Filter based on + tags\*
+    - Filter based in - tags
+    - Ability to filter based on `and` or `OR`
+    - Order of importance
+  - Give link to original
 - Load based on type of block
-	- In case of lists, full tree is loaded*
-	- In case of text, full paragraph is loaded
-	- In case of header , full section is loaded
+  - In case of lists, full tree is loaded\*
+  - In case of text, full paragraph is loaded
+  - In case of header , full section is loaded
 - Architecture of the project
-	- Let the project be in typescript*
-	- Start with git from the beginning*
-	- Run as server running when editor is opened*
-	- Run as service in the OS
-	- Run as service in cloud
+  - Let the project be in typescript\*
+  - Start with git from the beginning\*
+  - Run as server running when editor is opened\*
+  - Run as service in the OS
+  - Run as service in cloud
 - Have a web interface with draftjs
 - Plugins
-	- There is a plugin support where the meaning of tags is understood and translated to actions
-	- One of the plugin is calendar where dates are scheduled
-		- Date as tag
-		- Have tags fo
-			- `today`
-			- `tomorrow`
-			- `yesterday`
-			- Recurring
-				- `weekday`
-				- `weekend`
-				- `every[...]`
-				- `biweekly`
-			- `{monthname}`
-			- `wait`
-			- `due`
-		- Allow different date formats
-	- special tags
-		- todo
-		- done
-		- open
-		- For images and links 
+  - There is a plugin support where the meaning of tags is understood and translated to actions
+  - One of the plugin is calendar where dates are scheduled
+    - Date as tag
+    - Have tags fo
+      - `today`
+      - `tomorrow`
+      - `yesterday`
+      - Recurring
+        - `weekday`
+        - `weekend`
+        - `every[...]`
+        - `biweekly`
+      - `{monthname}`
+      - `wait`
+      - `due`
+    - Allow different date formats
+  - special tags
+    - todo
+    - done
+    - open
+    - For images and links
 
+## MVP tasks
 
-##  MVP tasks 
 - [o] Main
-	- [x] Project config 
-		- [x] Git 
-		- [x] Node
-		- [x] Unit tests
-	- [x] Nearley
-		- [x] Compiler setup
-		- [x] Add rules
-	- [ ] collect tags and update 
-		- [x] Tags grouping 
-		- [x] Blocks line number 
-		- [x] Collect blocks for tags
-		- [x] Collect text 
-		- [ ] Update file with new text
-	- [ ] Database
-		- [ ] Setup db
-		- [ ] Save
-		- [ ] Get
-	- [ ] Watch and update
-		- [ ] index once 
-		- [ ] Index on start for modified files
-		- [ ] Index saved files
-		- [ ] Fetch data for opened files
+  - [x] Project config
+    - [x] Git
+    - [x] Node
+    - [x] Unit tests
+  - [x] Nearley
+    - [x] Compiler setup
+    - [x] Add rules
+  - [ ] collect tags and update
+    - [x] Tags grouping
+    - [x] Blocks line number
+    - [x] Collect blocks for tags
+    - [x] Collect text
+    - [ ] Update file with new text
+  - [ ] Database
+    - [ ] Setup db
+    - [ ] Save
+    - [ ] Get
+  - [ ] Watch and update
+    - [ ] index once
+    - [ ] Index on start for modified files
+    - [ ] Index saved files
+    - [ ] Fetch data for opened files
