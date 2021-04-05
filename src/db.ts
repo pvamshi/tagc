@@ -4,11 +4,12 @@ import {
   find,
   first,
   from,
-  List,
   prepend,
   toArray,
   update,
-} from 'list';
+  filter,
+  List,
+} from 'list/methods';
 import { keyBy } from 'lodash';
 import { promisify } from 'util';
 import fs from 'fs';
@@ -140,6 +141,16 @@ export function updateLine(line: LineDocument) {
 export function addTags(tags: Tags) {
   tagsData = prepend({ ...tags, _id: nanoid() }, tagsData);
   return first(tagsData);
+}
+
+export function getTags(): List<TagsDocument> {
+  return filter(
+    (tags) =>
+      tags.excludeTag.length > 0 ||
+      tags.includeTag.length > 0 ||
+      tags.hashtag.length > 0,
+    tagsData
+  );
 }
 
 // function addItem<T>(item: T, list: List<T & Document>) {

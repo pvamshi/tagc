@@ -20,17 +20,20 @@ import {
   saveData,
   LineDocument,
   updateLine,
+  getTags,
 } from './db';
 import { relativePath } from './utils';
 import { keyBy } from 'lodash';
 import { getLineType, parseTags } from './parser';
-import { append, empty, last, pop } from 'list';
+import { toArray, append, empty, filter, last, pop } from 'list';
 
 // step 1: Get file to update
 // step 2: get file changes :: commit-changes.ts
 // step 3: add or update the changes
 // step 4: Refresh the blocks
-// step 5:
+// step 5: get all queries
+//
+// step 6: replace their data with results
 
 const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
 loadData().then(() =>
@@ -41,10 +44,10 @@ loadData().then(() =>
 
 async function appendChanges(filePath: string) {
   const changes = await commitChanges(filePath);
-  if (!changes) {
-    return;
+  if (changes) {
+    const changedFile = await changeFile(changes);
   }
-  const changedFile = await changeFile(changes);
+  getQueries();
 }
 
 function changeFile({ filePath, changes }: DiffType) {
@@ -133,6 +136,31 @@ function updateTreeStructure(lineIds: ID[], stepLength = 1) {
   lines.forEach(updateLine);
   console.log(lines);
 }
+
+function getQueries() {
+  const tags = getTags();
+
+  const isEqual = (tagA: string) => (tagB: string) => tagA === tagB;
+  const isNotEqual = (tagA: string) => (tagB: string) => tagA !== tagB;
+  const compare = (
+    includeTags: string[],
+    excludeTags: string[],
+    hashes: string[]
+  ) =>
+    includeTags.every((tag) => hashes.map(isEqual).some((fn) => fn(tag))) &&
+    excludeTags.every((tag) => hashes.map(isNotEqual).every((fn) => fn(tag)));
+
+  const queries = filter(
+    (tag) => tag.includeTag.length > 0 || tag.excludeTag.length > 0,
+    tags
+  );
+  const hashes = filter((tag) => tag.hashtag.length > 0, tags);
+  const results = queries.map(({ excludeTag, includeTag }) =>
+    hashes.filter(({ hashtag }) => compare(includeTag, excludeTag, hashtag))
+  );
+  console.log({ results: JSON.stringify(toArray(results)) });
+}
+
 // import chokidar from 'chokidar'
 
 // //
