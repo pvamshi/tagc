@@ -33,6 +33,7 @@ export interface Line {
   content: string;
   children: ID[];
   depth: number;
+  referenceLineId?: ID;
 }
 export interface Tags {
   lineId: ID;
@@ -74,18 +75,6 @@ export function saveData() {
     console.log('done writing to tags.json')
   );
 }
-export function logFile(filePath: string) {
-  const relPath = relativePath(filePath);
-  const file = find((file) => file.filePath === relPath, filesData);
-  if (file) {
-    console.log(
-      file.children
-        .map((lineId) => getLine(lineId))
-        .map((line) => (line !== undefined ? line.content : '<no-data>'))
-        .join('\n')
-    );
-  }
-}
 
 export function addLine(line: Line, _id = nanoid()): LineDocument {
   linesData = prepend({ _id, ...line, children: [] }, linesData);
@@ -95,6 +84,9 @@ export function addLine(line: Line, _id = nanoid()): LineDocument {
 // async function updateLine(_id: string, line: string) {
 //   await linesDB.update({ _id }, { type: 'line', content: line, children: [] });
 // }
+export function getFileById(fileId: ID) {
+  return find((f) => f._id === fileId, filesData) as FileDocument;
+}
 export function getFile(relativePath: string, createNew = false): FileDocument {
   let fileData = find(
     (f) => f.filePath === relativePath,

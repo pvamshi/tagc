@@ -16,16 +16,17 @@ import {
   getLine,
   ID,
   loadData,
-  logFile,
   saveData,
   LineDocument,
   updateLine,
   getTags,
+  getFileById,
 } from './db';
+import { writeText } from './fileio';
 import { relativePath } from './utils';
 import { keyBy } from 'lodash';
 import { getLineType, parseTags } from './parser';
-import { toArray, append, empty, filter, last, pop } from 'list';
+import { toArray, append, empty, filter, last, pop, list, find } from 'list';
 
 // step 1: Get file to update
 // step 2: get file changes :: commit-changes.ts
@@ -36,18 +37,26 @@ import { toArray, append, empty, filter, last, pop } from 'list';
 // step 6: replace their data with results
 
 const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
-loadData().then(() =>
-  appendChanges(testFile)
-    .then(saveData)
-    .then(() => logFile(testFile))
+loadData().then(
+  () =>
+    appendChanges(testFile)
+      .then(async (results: { file: string; content: string }[]) => {
+        return Promise.all(
+          results.map(({ file, content }) => writeText(file, content))
+        );
+      })
+      .then(saveData)
+  // .then(() => console.log(logFile(testFile)))
 );
 
-async function appendChanges(filePath: string) {
+async function appendChanges(
+  filePath: string
+): Promise<{ file: string; content: string }[]> {
   const changes = await commitChanges(filePath);
   if (changes) {
     const changedFile = await changeFile(changes);
   }
-  getQueries();
+  return getQueries();
 }
 
 function changeFile({ filePath, changes }: DiffType) {
@@ -134,10 +143,9 @@ function updateTreeStructure(lineIds: ID[], stepLength = 1) {
     }
   }
   lines.forEach(updateLine);
-  console.log(lines);
 }
 
-function getQueries() {
+function getQueries(): { file: string; content: string }[] {
   const tags = getTags();
 
   const isEqual = (tagA: string) => (tagB: string) => tagA === tagB;
@@ -155,10 +163,76 @@ function getQueries() {
     tags
   );
   const hashes = filter((tag) => tag.hashtag.length > 0, tags);
-  const results = queries.map(({ excludeTag, includeTag }) =>
-    hashes.filter(({ hashtag }) => compare(includeTag, excludeTag, hashtag))
-  );
-  console.log({ results: JSON.stringify(toArray(results)) });
+  const results = queries
+    .map(({ lineId, excludeTag, includeTag }) => ({
+      lineId,
+      results: hashes.filter(({ hashtag }) =>
+        compare(includeTag, excludeTag, hashtag)
+      ),
+    }))
+    .map(({ results, lineId }) => ({
+      line: getLine(lineId),
+      results: results.map((result) => result.lineId).map(getLine),
+    }))
+    .reduce<{
+      [key: string]: { line: LineDocument; results: LineDocument[] }[];
+    }>((acc, { line, results }) => {
+      const fileId = line.fileId;
+      if (!acc[fileId]) {
+        acc[fileId] = [];
+      }
+      acc[fileId].push({ line, results: toArray(results) });
+      return acc;
+    }, {});
+  return writeToFiles(results);
+}
+
+function writeToFiles(totalResults: {
+  [key: string]: { line: LineDocument; results: LineDocument[] }[];
+}): { file: string; content: string }[] {
+  return Object.keys(totalResults).map((fileId) => {
+    const results = totalResults[fileId];
+    const file = getFileById(fileId);
+    results.forEach(({ line, results }) => {
+      const linesToAdd = results.flatMap((result) =>
+        addReferenceLine(fileId, result).map((l) => l._id)
+      );
+      const queryLineId = file.children.indexOf(line._id);
+      file.children.splice(queryLineId + 1, 0, ...linesToAdd);
+    });
+    return { file: file.filePath, content: logFile(fileId).join('\n') };
+  });
+}
+
+function addReferenceLine(fileId: ID, reference: LineDocument): LineDocument[] {
+  const parentLine = addLine({
+    content: reference.content,
+    type: 'REFERENCE',
+    parentId: undefined,
+    children: [],
+    depth: reference.depth,
+    fileId: fileId,
+    referenceLineId: reference._id,
+  });
+  const lines: LineDocument[] = [parentLine];
+  if (parentLine.children.length > 0) {
+    reference.children.forEach((childLineId) => {
+      const l = getLine(childLineId);
+      const addedLines = addReferenceLine(fileId, l);
+      lines.concat(addedLines);
+    });
+    parentLine.children = lines.map(({ _id }) => _id);
+    updateLine(parentLine);
+  }
+  return lines;
+}
+
+export function logFile(fileId: ID): string[] {
+  const file = getFileById(fileId);
+  if (file) {
+    return file.children.map((lineId) => getLine(lineId).content);
+  }
+  return [];
 }
 
 // import chokidar from 'chokidar'
