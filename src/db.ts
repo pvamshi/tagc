@@ -9,6 +9,8 @@ import {
   update,
   filter,
   List,
+  indexOf,
+  remove,
 } from 'list/methods';
 import { keyBy } from 'lodash';
 import { promisify } from 'util';
@@ -34,6 +36,7 @@ export interface Line {
   children: ID[];
   depth: number;
   referenceLineId?: ID;
+  referenceLines?: number;
 }
 export interface Tags {
   lineId: ID;
@@ -76,7 +79,16 @@ export function saveData() {
   );
 }
 
+export function deleteLine(lineId: ID) {
+  const lineIndex = findIndex(
+    (line: LineDocument) => line._id === lineId,
+    linesData
+  );
+  linesData = remove(lineIndex, 1, linesData);
+  deleteTagsByLineId(lineId);
+}
 export function addLine(line: Line, _id = nanoid()): LineDocument {
+  console.log('adding line', line);
   linesData = prepend({ _id, ...line, children: [] }, linesData);
   return first(linesData) as LineDocument;
 }
@@ -135,6 +147,19 @@ export function addTags(tags: Tags) {
   return first(tagsData);
 }
 
+export function deleteTagsByLineId(lineId: string) {
+  filter((t) => t.lineId === lineId, tagsData).forEach((tag) =>
+    deleteTags(tag._id)
+  );
+}
+
+export function deleteTags(tagsId: ID) {
+  const tagIndex = findIndex(
+    (tag: TagsDocument) => tag._id === tagsId,
+    tagsData
+  );
+  tagsData = remove(tagIndex, 1, tagsData);
+}
 export function getTags(): List<TagsDocument> {
   return filter(
     (tags) =>

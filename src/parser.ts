@@ -17,7 +17,10 @@ export function parseTags(lineId: string): Tags {
   if (!block) {
     throw new Error('no line exists with blockId:' + lineId);
   }
-  const text = getLine(lineId).content;
+  if (block.type === 'REFERENCE') {
+    return { lineId, includeTag: [], excludeTag: [], hashtag: [] };
+  }
+  const text = block.content;
   const tagsParser = new nearley.Parser(nearley.Grammar.fromCompiled(hashtag));
   tagsParser.feed(text);
   return pipe(

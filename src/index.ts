@@ -21,6 +21,7 @@ import {
   updateLine,
   getTags,
   getFileById,
+  deleteLine,
 } from './db';
 import { writeText } from './fileio';
 import { relativePath } from './utils';
@@ -33,8 +34,10 @@ import { toArray, append, empty, filter, last, pop, list, find } from 'list';
 // step 3: add or update the changes
 // step 4: Refresh the blocks
 // step 5: get all queries
-//
+// step 5.1 : Delete unused lines and tags
+// step 5.2 : ignore tags in reference
 // step 6: replace their data with results
+// step 7 : change only changed lines
 
 const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
 loadData().then(
@@ -70,7 +73,7 @@ function changeFile({ filePath, changes }: DiffType) {
 function applyChanges(fileId: ID, children: ID[], changes: LineDiff) {
   Object.keys(changes).forEach((index: string) => {
     const actions = keyBy(changes[index], 'type');
-    let deletedLines: any[];
+    let deletedLines: string[];
     if (actions['add']) {
       const newLine = addNewLine(actions['add'].content, fileId);
       deletedLines = children.splice(
@@ -81,8 +84,7 @@ function applyChanges(fileId: ID, children: ID[], changes: LineDiff) {
     } else {
       deletedLines = children.splice(Number(index), actions['del'] ? 1 : 0);
     }
-    //TODO: Delete lines from db, and corresponding tags
-    // console.log('deleted lines', deletedLines);
+    deletedLines.forEach(deleteLine);
   });
 }
 function addNewLine(content: string, fileId: ID) {
@@ -172,7 +174,10 @@ function getQueries(): { file: string; content: string }[] {
     }))
     .map(({ results, lineId }) => ({
       line: getLine(lineId),
-      results: results.map((result) => result.lineId).map(getLine),
+      results: results
+        .map((result) => result.lineId)
+        .map(getLine)
+        .filter((line) => line.type !== 'REFERENCE'),
     }))
     .reduce<{
       [key: string]: { line: LineDocument; results: LineDocument[] }[];
@@ -198,7 +203,16 @@ function writeToFiles(totalResults: {
         addReferenceLine(fileId, result).map((l) => l._id)
       );
       const queryLineId = file.children.indexOf(line._id);
-      file.children.splice(queryLineId + 1, 0, ...linesToAdd);
+      const linesToReplace = line.referenceLines || 0;
+      console.log({ linesToReplace, linesToAdd });
+      const oldReferenceLines = file.children.splice(
+        queryLineId + 1,
+        linesToReplace,
+        ...linesToAdd
+      );
+      line.referenceLines = linesToAdd.length;
+      updateLine(line);
+      oldReferenceLines.forEach(deleteLine);
     });
     return { file: file.filePath, content: logFile(fileId).join('\n') };
   });

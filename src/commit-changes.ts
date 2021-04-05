@@ -15,6 +15,10 @@ export interface DiffType {
   filePath: string;
   changes: LineDiff;
 }
+export async function commitOnly(filePath: string) {
+  let { stderr } = await asyncExec(`echo "."| ci -l ${filePath}`);
+  return stderr;
+}
 export async function commitChanges(
   filePath: string
 ): Promise<DiffType | null> {
