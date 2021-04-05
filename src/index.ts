@@ -12,7 +12,7 @@
 import { commitChanges } from './commit-changes';
 import { of } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
-import { changeFile } from './db';
+import { changeFile, loadData, logFile, saveData } from './db';
 
 // step 1: Get file to update
 // step 2: get file changes :: commit-changes.ts
@@ -32,8 +32,11 @@ async function appendChanges(filePath: string) {
     return await changeFile(changes);
   }
 }
-appendChanges('/Users/vamshi/Dropbox/life/test-lists.md').then(() =>
-  console.log('done')
+const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
+loadData().then(() =>
+  appendChanges(testFile)
+    .then(saveData)
+    .then(() => logFile(testFile))
 );
 
 // import chokidar from 'chokidar'

@@ -8,7 +8,7 @@ import parseDiff, { AddChange, DeleteChange } from 'parse-diff';
 // TODO: ugly code , refactor
 const asyncExec = promisify(exec);
 
-type LineDiff = {
+export type LineDiff = {
   [key: string]: { type: 'del' | 'add'; content: string }[];
 };
 export interface DiffType {
@@ -57,7 +57,6 @@ export async function commitChanges(
     console.error(err.stdout);
   }
 
-  console.log(diff);
   const changes = parseDiff(diff);
   return {
     filePath,
@@ -66,12 +65,12 @@ export async function commitChanges(
         (change.type === 'add' && change?.add) ||
         (change.type === 'del' && change.del)
     ) as (AddChange | DeleteChange)[]).reduce((acc: LineDiff, curr) => {
-      const line = curr.ln;
+      const lineIndex = curr.ln - 1; // convert line number to index
       const temp: { type: 'del' | 'add'; content: string } = {
         type: curr.type,
         content: curr.content.slice(1),
       };
-      acc[line] = acc[line] ? [...acc[line], temp] : [temp];
+      acc[lineIndex] = acc[lineIndex] ? [...acc[lineIndex], temp] : [temp];
       return acc;
     }, {}),
   };

@@ -1,56 +1,113 @@
-// import loki from 'lokijs'
-// import { Block } from './parser'
-// const db = new loki('tagc.db')
+import { empty, find, first, from, prepend, toArray } from 'list';
 import { keyBy } from 'lodash';
-import Datastore from 'nedb-promises';
-import { Observable, of } from 'rxjs';
-import { mergeMap, filter } from 'rxjs/operators';
-import { DiffType } from './commit-changes';
+import { promisify } from 'util';
+import fs from 'fs';
+import { DiffType, LineDiff } from './commit-changes';
 import { relativePath } from './utils';
+import { nanoid } from 'nanoid';
 
-const linesDB = Datastore.create('/Users/vamshi/code/personal/tagc/lines.db');
+async function amap<T, U>(
+  items: T[],
+  fun: (item: T) => Promise<U>
+): Promise<U[]> {
+  return Promise.all(items.map(fun));
+}
+
 interface LineDocument {
-  type: 'line';
-  parent: 'string';
+  parent: string;
+  content: string;
   children: string[];
   _id: string;
 }
 interface FileDocument {
-  type: 'file';
   filePath: string;
   children: string[];
   _id: string;
 }
-// export function testDB() {
-//   return db.insert([{ name: 'vamshi' }])
-// }
-export async function changeFile({ filePath, changes }: DiffType) {
-  let fileData = await linesDB.findOne({
-    type: 'file',
-    filePath: relativePath(filePath),
-  });
-  if (!fileData) {
-    fileData = await linesDB.insert({ type: 'file', filePath, children: [] });
+let filesData = empty<FileDocument>();
+let linesData = empty<LineDocument>();
+const readFile = promisify(fs.readFile);
+const writeFile = promisify(fs.writeFile);
+export async function loadData() {
+  filesData = from(
+    JSON.parse(await readFile('files.json', 'utf-8')) as FileDocument[]
+  );
+  linesData = from(
+    JSON.parse(await readFile('lines.json', 'utf-8')) as LineDocument[]
+  );
+}
+export function saveData() {
+  const f = JSON.stringify(toArray(filesData), null, 1);
+  const l = JSON.stringify(toArray(linesData), null, 1);
+  writeFile('files.json', f, 'utf-8').then(() =>
+    console.log('done writing to files.json')
+  );
+  writeFile('lines.json', l, 'utf-8').then(() =>
+    console.log('done writing to lines.json')
+  );
+}
+export function logFile(filePath: string) {
+  const relPath = relativePath(filePath);
+  const file = find((file) => file.filePath === relPath, filesData);
+  if (file) {
+    console.log(
+      file.children
+        .map((lineId) => getLine(file._id, lineId))
+        .map((line) => (line !== undefined ? line.content : '<no-data>'))
+        .join('\n')
+    );
   }
-  console.log(fileData);
-  // applyChanges(fileData.children, changes);
-  // console.log(fileData.children);
+}
+export function changeFile({ filePath, changes }: DiffType) {
+  const path = relativePath(filePath);
+  let fileData = find((f) => f.filePath === path, filesData) as FileDocument;
+  if (!fileData) {
+    filesData = prepend(
+      { filePath: path, children: [], _id: nanoid() },
+      filesData
+    );
+    fileData = first(filesData) as FileDocument;
+  }
+  applyChanges(fileData._id, fileData.children, changes);
   return fileData;
 }
 
-function applyChanges(children: string[], { changes }: DiffType) {
+function applyChanges(parent: string, children: string[], changes: LineDiff) {
   Object.keys(changes).forEach((index: string) => {
     const actions = keyBy(changes[index], 'type');
+    let deletedLines: any[];
     if (actions['add']) {
-      children.splice(
+      const newLine = addLine(actions['add'].content, parent);
+      deletedLines = children.splice(
         Number(index),
         actions['del'] ? 1 : 0,
-        actions['add'].content
+        newLine._id
       );
     } else {
-      children.splice(Number(index), actions['del'] ? 1 : 0);
+      deletedLines = children.splice(Number(index), actions['del'] ? 1 : 0);
     }
+    //TODO: Delete lines from db
+    // console.log('deleted lines', deletedLines);
   });
+}
+
+function addLine(
+  content: string,
+  parent: string,
+  _id = nanoid()
+): LineDocument {
+  linesData = prepend({ _id, content, parent, children: [] }, linesData);
+  return first(linesData) as LineDocument;
+}
+// async function updateLine(_id: string, line: string) {
+//   await linesDB.update({ _id }, { type: 'line', content: line, children: [] });
+// }
+function getLine(parent: string, _id: string, readOnly = true): LineDocument {
+  let line = find((data) => data._id === _id, linesData);
+  if (!line && !readOnly) {
+    return addLine('', parent, _id);
+  }
+  return line as LineDocument;
 }
 // export type FileData = { name: string } & Block
 // var fileDatas = db.addCollection<FileData>('fileData')
