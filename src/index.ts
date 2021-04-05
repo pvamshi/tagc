@@ -1,37 +1,37 @@
 // import { getText, writeText } from './fileio'
 // import { getBlocks, getTargetBlocks, Block, mergeText } from './parser'
 // import {
-//   testDB,
-// getHashTagBlocks,
+//   testDB, // getHashTagBlocks,
 // getIncludeTags,
 // saveTags,
 // TargetTemp,
 // } from './db';
 // import glob from 'glob'
 // import { fromPairs } from 'lodash'
-import { commitChanges } from './commit-changes';
-import { of } from 'rxjs';
-import { filter, mergeMap } from 'rxjs/operators';
-import { changeFile, loadData, logFile, saveData } from './db';
+import { commitChanges, DiffType, LineDiff } from './commit-changes';
+import {
+  addLine,
+  addTags,
+  getFile,
+  getLine,
+  ID,
+  loadData,
+  logFile,
+  saveData,
+  LineDocument,
+  updateLine,
+} from './db';
+import { relativePath } from './utils';
+import { keyBy } from 'lodash';
+import { getLineType, parseTags } from './parser';
+import { append, empty, last, pop } from 'list';
 
 // step 1: Get file to update
 // step 2: get file changes :: commit-changes.ts
 // step 3: add or update the changes
 // step 4: Refresh the blocks
+// step 5:
 
-// of('/Users/vamshi/Dropbox/life/test-lists.md')
-//   .pipe(
-//     mergeMap(commitChanges),
-//     filter((changes) => !!changes),
-//     mergeMap(changeFile)
-//   )
-//   .subscribe((d) => console.log(d));
-async function appendChanges(filePath: string) {
-  const changes = await commitChanges(filePath);
-  if (changes) {
-    return await changeFile(changes);
-  }
-}
 const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
 loadData().then(() =>
   appendChanges(testFile)
@@ -39,6 +39,100 @@ loadData().then(() =>
     .then(() => logFile(testFile))
 );
 
+async function appendChanges(filePath: string) {
+  const changes = await commitChanges(filePath);
+  if (!changes) {
+    return;
+  }
+  const changedFile = await changeFile(changes);
+}
+
+function changeFile({ filePath, changes }: DiffType) {
+  const path = relativePath(filePath);
+  const fileData = getFile(path, true);
+  applyChanges(fileData._id, fileData.children, changes);
+  updateTreeStructure(fileData.children);
+  return fileData;
+}
+
+function applyChanges(fileId: ID, children: ID[], changes: LineDiff) {
+  Object.keys(changes).forEach((index: string) => {
+    const actions = keyBy(changes[index], 'type');
+    let deletedLines: any[];
+    if (actions['add']) {
+      const newLine = addNewLine(actions['add'].content, fileId);
+      deletedLines = children.splice(
+        Number(index),
+        actions['del'] ? 1 : 0,
+        newLine._id
+      );
+    } else {
+      deletedLines = children.splice(Number(index), actions['del'] ? 1 : 0);
+    }
+    //TODO: Delete lines from db, and corresponding tags
+    // console.log('deleted lines', deletedLines);
+  });
+}
+function addNewLine(content: string, fileId: ID) {
+  const lineType = getLineType(content);
+  const newLine = addLine({
+    content,
+    fileId,
+    parentId: undefined,
+    type: lineType.type,
+    done: lineType.type === 'TASK' ? lineType.done : undefined,
+    depth: lineType.depth || 0, // TODO: why ?
+    children: [],
+  });
+  const tags = parseTags(newLine._id);
+  if (
+    tags.excludeTag.length > 0 ||
+    tags.includeTag.length > 0 ||
+    tags.hashtag.length > 0
+  ) {
+    addTags(tags);
+  }
+  return newLine;
+}
+
+function updateTreeStructure(lineIds: ID[], stepLength = 1) {
+  const lines = lineIds.map((lineId) => getLine(lineId));
+  let parentStack = empty<LineDocument>();
+  let difference = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const current = lines[i];
+    const previous = lines[i - 1];
+    if (current.depth < previous.depth) {
+      // invalid parent pointer TODO:
+      difference = difference - (previous.depth - current.depth);
+      if (difference <= 0) {
+        let steps = Math.floor((previous.depth - current.depth) / stepLength);
+        while (steps > 0) {
+          parentStack = pop(parentStack);
+          steps = steps - 1;
+        }
+      }
+      const currentParent = last(parentStack);
+      if (currentParent) {
+        currentParent.children.push(current._id);
+        current.parentId = currentParent._id;
+      }
+    } else if (current.depth == previous.depth) {
+      const currentParent = last(parentStack);
+      if (currentParent) {
+        currentParent.children.push(current._id);
+        current.parentId = currentParent._id;
+      }
+    } else if (current.depth > previous.depth) {
+      parentStack = append(previous, parentStack);
+      previous.children.push(current._id);
+      current.parentId = previous._id;
+      difference = current.depth - previous.depth;
+    }
+  }
+  lines.forEach(updateLine);
+  console.log(lines);
+}
 // import chokidar from 'chokidar'
 
 // //

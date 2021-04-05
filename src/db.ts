@@ -1,4 +1,14 @@
-import { empty, find, first, from, prepend, toArray } from 'list';
+import {
+  findIndex,
+  empty,
+  find,
+  first,
+  from,
+  List,
+  prepend,
+  toArray,
+  update,
+} from 'list';
 import { keyBy } from 'lodash';
 import { promisify } from 'util';
 import fs from 'fs';
@@ -6,26 +16,36 @@ import { DiffType, LineDiff } from './commit-changes';
 import { relativePath } from './utils';
 import { nanoid } from 'nanoid';
 
-async function amap<T, U>(
-  items: T[],
-  fun: (item: T) => Promise<U>
-): Promise<U[]> {
-  return Promise.all(items.map(fun));
+export type ID = string;
+export type Document = { _id: ID };
+export interface File {
+  filePath: string;
+  children: ID[];
 }
 
-interface LineDocument {
-  parent: string;
+export type LineType = 'TEXT' | 'LIST' | 'TASK' | 'REFERENCE' | 'HEADING';
+export interface Line {
+  fileId: ID;
+  parentId: ID | undefined;
+  type: LineType;
+  done?: boolean;
   content: string;
-  children: string[];
-  _id: string;
+  children: ID[];
+  depth: number;
 }
-interface FileDocument {
-  filePath: string;
-  children: string[];
-  _id: string;
+export interface Tags {
+  lineId: ID;
+  includeTag: string[];
+  excludeTag: string[];
+  hashtag: string[];
 }
+export type TagsDocument = Tags & Document;
+export type FileDocument = File & Document;
+export type LineDocument = Line & Document;
+
 let filesData = empty<FileDocument>();
 let linesData = empty<LineDocument>();
+let tagsData = empty<TagsDocument>();
 const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 export async function loadData() {
@@ -35,15 +55,22 @@ export async function loadData() {
   linesData = from(
     JSON.parse(await readFile('lines.json', 'utf-8')) as LineDocument[]
   );
+  tagsData = from(
+    JSON.parse(await readFile('tags.json', 'utf-8')) as TagsDocument[]
+  );
 }
 export function saveData() {
   const f = JSON.stringify(toArray(filesData), null, 1);
   const l = JSON.stringify(toArray(linesData), null, 1);
+  const t = JSON.stringify(toArray(tagsData), null, 1);
   writeFile('files.json', f, 'utf-8').then(() =>
     console.log('done writing to files.json')
   );
   writeFile('lines.json', l, 'utf-8').then(() =>
     console.log('done writing to lines.json')
+  );
+  writeFile('tags.json', t, 'utf-8').then(() =>
+    console.log('done writing to tags.json')
   );
 }
 export function logFile(filePath: string) {
@@ -52,102 +79,70 @@ export function logFile(filePath: string) {
   if (file) {
     console.log(
       file.children
-        .map((lineId) => getLine(file._id, lineId))
+        .map((lineId) => getLine(lineId))
         .map((line) => (line !== undefined ? line.content : '<no-data>'))
         .join('\n')
     );
   }
 }
-export function changeFile({ filePath, changes }: DiffType) {
-  const path = relativePath(filePath);
-  let fileData = find((f) => f.filePath === path, filesData) as FileDocument;
-  if (!fileData) {
+
+export function addLine(line: Line, _id = nanoid()): LineDocument {
+  linesData = prepend({ _id, ...line, children: [] }, linesData);
+  return first(linesData) as LineDocument;
+}
+
+// async function updateLine(_id: string, line: string) {
+//   await linesDB.update({ _id }, { type: 'line', content: line, children: [] });
+// }
+export function getFile(relativePath: string, createNew = false): FileDocument {
+  let fileData = find(
+    (f) => f.filePath === relativePath,
+    filesData
+  ) as FileDocument;
+  if (!fileData && createNew) {
     filesData = prepend(
-      { filePath: path, children: [], _id: nanoid() },
+      { filePath: relativePath, children: [], _id: nanoid() }, //TODO: we can use relativepath as id
       filesData
     );
     fileData = first(filesData) as FileDocument;
   }
-  applyChanges(fileData._id, fileData.children, changes);
   return fileData;
 }
-
-function applyChanges(parent: string, children: string[], changes: LineDiff) {
-  Object.keys(changes).forEach((index: string) => {
-    const actions = keyBy(changes[index], 'type');
-    let deletedLines: any[];
-    if (actions['add']) {
-      const newLine = addLine(actions['add'].content, parent);
-      deletedLines = children.splice(
-        Number(index),
-        actions['del'] ? 1 : 0,
-        newLine._id
-      );
-    } else {
-      deletedLines = children.splice(Number(index), actions['del'] ? 1 : 0);
-    }
-    //TODO: Delete lines from db
-    // console.log('deleted lines', deletedLines);
-  });
-}
-
-function addLine(
-  content: string,
-  parent: string,
-  _id = nanoid()
-): LineDocument {
-  linesData = prepend({ _id, content, parent, children: [] }, linesData);
-  return first(linesData) as LineDocument;
-}
-// async function updateLine(_id: string, line: string) {
-//   await linesDB.update({ _id }, { type: 'line', content: line, children: [] });
-// }
-function getLine(parent: string, _id: string, readOnly = true): LineDocument {
+export function getLine(_id: ID, fileId?: ID): LineDocument {
   let line = find((data) => data._id === _id, linesData);
-  if (!line && !readOnly) {
-    return addLine('', parent, _id);
+  if (!line && fileId) {
+    return addLine(
+      {
+        content: '',
+        fileId,
+        parentId: undefined,
+        children: [],
+        depth: 0,
+        type: 'TEXT',
+      },
+      _id
+    );
   }
   return line as LineDocument;
 }
-// export type FileData = { name: string } & Block
-// var fileDatas = db.addCollection<FileData>('fileData')
-//
-// export function saveTags(file: string, blocks: Block[]) {
-//   const fileDataList: FileData[] = blocks.map((block) => ({
-//     ...block,
-//     name: file,
-//   }))
-//   fileDatas.insert(fileDataList)
-// }
-//
-// export function getHashTagBlocks(tag: string) {
-//   const files: FileData[] = fileDatas.where(
-//     (file) => file.tags.hashtag.length > 0 && file.tags.hashtag.includes(tag)
-//   )
-//   return files.reduce((acc: { [file: string]: FileData[] }, curr: FileData) => {
-//     acc[curr.name] = [...(acc[curr.name] || []), curr]
-//     return acc
-//   }, {})
-// }
-// export interface TargetTemp {
-//   lineNumber: number
-//   tags: string[]
-//   update: boolean
-// }
-// export function getIncludeTags(): { [file: string]: TargetTemp[] } {
-//   const includeTags = fileDatas.where((file) => file.tags.includeTag.length > 0)
-//   return includeTags.reduce(
-//     (acc: { [file: string]: TargetTemp[] }, curr: FileData) => {
-//       acc[curr.name] = [
-//         ...(acc[curr.name] || []),
-//         {
-//           lineNumber: curr.startIndex,
-//           tags: curr.tags.includeTag,
-//           update: false,
-//         },
-//       ]
-//       return acc
-//     },
-//     {}
-//   )
+
+export function updateLine(line: LineDocument) {
+  const lineIndex = findIndex(
+    (l: LineDocument) => l._id === line._id,
+    linesData
+  );
+  if (lineIndex > -1) {
+    linesData = update(lineIndex, line, linesData);
+  }
+}
+
+// TAGS
+export function addTags(tags: Tags) {
+  tagsData = prepend({ ...tags, _id: nanoid() }, tagsData);
+  return first(tagsData);
+}
+
+// function addItem<T>(item: T, list: List<T & Document>) {
+//   const newList = prepend(item, list);
+//   return [first(newList), newList];
 // }
