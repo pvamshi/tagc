@@ -39,6 +39,17 @@ import { toArray, append, empty, filter, last, pop, list, find } from 'list';
 // step 6: replace their data with results
 // step 7 : change only changed lines
 
+/**
+ * Bugs/features yet to fix
+ * [ ] Change only updated lines hashes
+ * [ ] Parent hash to be inherited to child
+ * [ ] Plugin system
+ * [ ] Code refactor
+ * [ ] Use chokidar
+ * [ ] text in between lists
+ * [ ]
+ */
+
 const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
 loadData().then(
   () =>
@@ -228,12 +239,12 @@ function addReferenceLine(fileId: ID, reference: LineDocument): LineDocument[] {
     fileId: fileId,
     referenceLineId: reference._id,
   });
-  const lines: LineDocument[] = [parentLine];
-  if (parentLine.children.length > 0) {
+  let lines: LineDocument[] = [parentLine];
+  if (reference.children.length > 0) {
     reference.children.forEach((childLineId) => {
       const l = getLine(childLineId);
       const addedLines = addReferenceLine(fileId, l);
-      lines.concat(addedLines);
+      lines = lines.concat(addedLines);
     });
     parentLine.children = lines.map(({ _id }) => _id);
     updateLine(parentLine);

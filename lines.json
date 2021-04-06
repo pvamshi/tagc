@@ -1,141 +1,218 @@
 [
  {
-  "_id": "f2SG-XcL9MCZTzkUp34QA",
+  "_id": "RQoZiEL91nnQ9semGI63k",
   "content": "- [ ] task 1 #proj1",
   "type": "REFERENCE",
   "children": [],
   "depth": 0,
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "referenceLineId": "z95VDAMb3d0aKoje-E2x2"
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "4g8VURUr6s9WDMU-xzhUX"
  },
  {
-  "_id": "Ng3NFwPSHXvhwsT_9EYAA",
-  "content": "- [ ] task 4 #proj1",
+  "_id": "0unEj22HHl6HHFwt9NTg7",
+  "content": "    - [ ] task 7.2",
   "type": "REFERENCE",
   "children": [],
-  "depth": 0,
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "referenceLineId": "kxXQJkENjaN5K4isWU44W"
+  "depth": 4,
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "THtXuSfWwRxpBw0XEMVue"
  },
  {
-  "_id": "-Oa7KrSp04EPGn1EOsVgM",
-  "content": "- [ ] task 9 #proj1",
+  "_id": "qWa5fkyGmRUr7sUuA1BRq",
+  "content": "    - [ ] task 7.1",
   "type": "REFERENCE",
   "children": [],
-  "depth": 0,
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "referenceLineId": "OzYMHIKr02-1j-fCzcSA_"
+  "depth": 4,
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "5RF2XA0ZKppj5YvNOgt5D"
  },
  {
-  "_id": "w9zH48rYs0-Z_h932MFZu",
-  "content": "",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "type": "TEXT",
-  "depth": 0,
-  "children": []
- },
- {
-  "_id": "rOwdi9TCylWBEM3dXwu6X",
-  "content": "+proj1",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "type": "TEXT",
-  "depth": 0,
-  "children": [],
-  "referenceLines": 3
- },
- {
-  "_id": "o3LQqCiXIXMShWeda1cxY",
-  "content": "",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "type": "TEXT",
-  "depth": 0,
-  "children": []
- },
- {
-  "_id": "OzYMHIKr02-1j-fCzcSA_",
-  "content": "- [ ] task 9 #proj1",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "type": "TASK",
-  "done": false,
-  "depth": 0,
-  "children": []
- },
- {
-  "_id": "lORkRCU1XKhzgCPwNJ439",
-  "content": "  - [ ] task 8 ",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "parentId": "kxXQJkENjaN5K4isWU44W",
-  "type": "TASK",
-  "done": false,
-  "depth": 2,
-  "children": []
- },
- {
-  "_id": "qG-MK7rhDMyq4GpHp6CER",
+  "_id": "xUuWr-I-a1pP8hWGc9YUA",
   "content": "  - [ ] task 7 ",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "parentId": "kxXQJkENjaN5K4isWU44W",
-  "type": "TASK",
-  "done": false,
+  "type": "REFERENCE",
+  "children": [
+   "xUuWr-I-a1pP8hWGc9YUA",
+   "qWa5fkyGmRUr7sUuA1BRq",
+   "0unEj22HHl6HHFwt9NTg7"
+  ],
   "depth": 2,
-  "children": []
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "xqbdCjurH-bJ8V50VLTev"
  },
  {
-  "_id": "U8OJNJXOHkEYSjVlD97hu",
+  "_id": "qyNtvvCGlFX_zfNmOKqDL",
   "content": "  - [ ] task 6 ",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "parentId": "kxXQJkENjaN5K4isWU44W",
-  "type": "TASK",
-  "done": false,
+  "type": "REFERENCE",
+  "children": [],
   "depth": 2,
-  "children": []
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "4suA4j0alrdwewVo2uO96"
  },
  {
-  "_id": "9rSkcTiCx8ONY9wMH0ccN",
+  "_id": "xbgNPKspEY13FVlStdtCo",
   "content": "  - [ ] tas5 5 ",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
-  "parentId": "kxXQJkENjaN5K4isWU44W",
+  "type": "REFERENCE",
+  "children": [],
+  "depth": 2,
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "qA8uEmHyToPjrETmHo0vK"
+ },
+ {
+  "_id": "pJhUtGF5tcaqmFx5wnSjW",
+  "content": "- [ ] task 4 #proj1",
+  "type": "REFERENCE",
+  "children": [
+   "pJhUtGF5tcaqmFx5wnSjW",
+   "xbgNPKspEY13FVlStdtCo",
+   "qyNtvvCGlFX_zfNmOKqDL",
+   "xUuWr-I-a1pP8hWGc9YUA",
+   "qWa5fkyGmRUr7sUuA1BRq",
+   "0unEj22HHl6HHFwt9NTg7"
+  ],
+  "depth": 0,
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "-YYLjUVxv4Lk408ZbS4pm"
+ },
+ {
+  "_id": "cUyo8DYbGr__WYycTLOv7",
+  "content": "- [ ] task 9 #proj1",
+  "type": "REFERENCE",
+  "children": [],
+  "depth": 0,
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "referenceLineId": "qvyOeagHQKxBIcHCakw-s"
+ },
+ {
+  "_id": "6VQKM2zJhl_LNtyA0c54j",
+  "content": "",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "type": "TEXT",
+  "depth": 0,
+  "children": []
+ },
+ {
+  "_id": "8cChtn7ZjylC3bLiHo1f1",
+  "content": "+proj1",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "type": "TEXT",
+  "depth": 0,
+  "children": [],
+  "referenceLines": 8
+ },
+ {
+  "_id": "VtKDZ24VF-Qt92scBR_M5",
+  "content": "",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "type": "TEXT",
+  "depth": 0,
+  "children": []
+ },
+ {
+  "_id": "qvyOeagHQKxBIcHCakw-s",
+  "content": "- [ ] task 9 #proj1",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "type": "TASK",
+  "done": false,
+  "depth": 0,
+  "children": []
+ },
+ {
+  "_id": "WF86R7uuhvGxn6xi_pLHC",
+  "content": "  - [ ] task 8 ",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
   "type": "TASK",
   "done": false,
   "depth": 2,
   "children": []
  },
  {
-  "_id": "kxXQJkENjaN5K4isWU44W",
+  "_id": "THtXuSfWwRxpBw0XEMVue",
+  "content": "    - [ ] task 7.2",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "parentId": "xqbdCjurH-bJ8V50VLTev",
+  "type": "TASK",
+  "done": false,
+  "depth": 4,
+  "children": []
+ },
+ {
+  "_id": "5RF2XA0ZKppj5YvNOgt5D",
+  "content": "    - [ ] task 7.1",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "parentId": "xqbdCjurH-bJ8V50VLTev",
+  "type": "TASK",
+  "done": false,
+  "depth": 4,
+  "children": []
+ },
+ {
+  "_id": "xqbdCjurH-bJ8V50VLTev",
+  "content": "  - [ ] task 7 ",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "parentId": "-YYLjUVxv4Lk408ZbS4pm",
+  "type": "TASK",
+  "done": false,
+  "depth": 2,
+  "children": [
+   "5RF2XA0ZKppj5YvNOgt5D",
+   "THtXuSfWwRxpBw0XEMVue"
+  ]
+ },
+ {
+  "_id": "4suA4j0alrdwewVo2uO96",
+  "content": "  - [ ] task 6 ",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "parentId": "-YYLjUVxv4Lk408ZbS4pm",
+  "type": "TASK",
+  "done": false,
+  "depth": 2,
+  "children": []
+ },
+ {
+  "_id": "qA8uEmHyToPjrETmHo0vK",
+  "content": "  - [ ] tas5 5 ",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
+  "parentId": "-YYLjUVxv4Lk408ZbS4pm",
+  "type": "TASK",
+  "done": false,
+  "depth": 2,
+  "children": []
+ },
+ {
+  "_id": "-YYLjUVxv4Lk408ZbS4pm",
   "content": "- [ ] task 4 #proj1",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
   "type": "TASK",
   "done": false,
   "depth": 0,
   "children": [
-   "9rSkcTiCx8ONY9wMH0ccN",
-   "U8OJNJXOHkEYSjVlD97hu",
-   "qG-MK7rhDMyq4GpHp6CER",
-   "lORkRCU1XKhzgCPwNJ439"
+   "qA8uEmHyToPjrETmHo0vK",
+   "4suA4j0alrdwewVo2uO96",
+   "xqbdCjurH-bJ8V50VLTev"
   ]
  },
  {
-  "_id": "5vuGor9TypekgYtEtkZoz",
+  "_id": "y5F4H5czqlHewISe1qhyf",
   "content": "- [ ] task 3 #proj3",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
   "type": "TASK",
   "done": false,
   "depth": 0,
   "children": []
  },
  {
-  "_id": "s8rnDxBGM_9YKI-SPCjF6",
+  "_id": "-OJTOeBU0a2nLW6izku_k",
   "content": "- [ ] task 2 #proj2",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
   "type": "TASK",
   "done": false,
   "depth": 0,
   "children": []
  },
  {
-  "_id": "z95VDAMb3d0aKoje-E2x2",
+  "_id": "4g8VURUr6s9WDMU-xzhUX",
   "content": "- [ ] task 1 #proj1",
-  "fileId": "e5Y5VY4qhWQ2uGMXcJhxx",
+  "fileId": "SXJTmBHuZaI4rWJokHAUa",
   "type": "TASK",
   "done": false,
   "depth": 0,
