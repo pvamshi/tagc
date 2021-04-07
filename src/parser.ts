@@ -3,7 +3,7 @@ import linetype from './lib/linetype';
 import target from './lib/target';
 import { mergeWith, pipe, reduce } from 'lodash/fp';
 import nearley from 'nearley';
-import { getLine, LineType, Tags } from './db';
+import { getLine, LineType, Tags } from './update-data';
 export type BlockType = 'TEXT' | 'LIST' | 'TASK' | 'REFERENCE' | 'HEADING';
 export interface Block {
   type: BlockType;
