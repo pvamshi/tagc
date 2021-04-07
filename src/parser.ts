@@ -18,18 +18,26 @@ export function parseTags(lineId: string): Tags {
     throw new Error('no line exists with blockId:' + lineId);
   }
   if (block.type === 'REFERENCE') {
-    return { lineId, includeTag: [], excludeTag: [], hashtag: [] };
+    return {
+      lineId,
+      includeTag: [],
+      excludeTag: [],
+      hashtag: [],
+      inheritedTags: [],
+    };
   }
   const text = block.content;
   const tagsParser = new nearley.Parser(nearley.Grammar.fromCompiled(hashtag));
   tagsParser.feed(text);
-  return pipe(
+  const res: Tags = pipe(
     reduce(
       (acc, { type, value }) =>
         mergeWith((a, b) => a.concat(b), acc, { [type]: [value] }),
-      { lineId, includeTag: [], excludeTag: [], hashtag: [] }
+      { lineId, includeTag: [], excludeTag: [], hashtag: [], inheritedTags: [] }
     )
   )(tagsParser.results);
+  res.hashtag = res.hashtag.filter((tag) => !tag.match(/#+/));
+  return res;
 }
 
 export function getLineType(

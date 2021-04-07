@@ -8,7 +8,7 @@ import {
   mergeText,
   getTargetBlocksType,
   getTargetBlocks,
-} from '../parser'
+} from '../parser-old'
 describe('parser.ts', () => {
   // TODO: Check if the order is fixed or random
   it('should parse hashtags', () => {

@@ -9,14 +9,10 @@ import {
   update,
   filter,
   List,
-  indexOf,
   remove,
 } from 'list/methods';
-import { keyBy } from 'lodash';
 import { promisify } from 'util';
 import fs from 'fs';
-import { DiffType, LineDiff } from './commit-changes';
-import { relativePath } from './utils';
 import { nanoid } from 'nanoid';
 
 export type ID = string;
@@ -26,7 +22,13 @@ export interface File {
   children: ID[];
 }
 
-export type LineType = 'TEXT' | 'LIST' | 'TASK' | 'REFERENCE' | 'HEADING';
+export type LineType =
+  | 'TEXT'
+  | 'LIST'
+  | 'TASK'
+  | 'REFERENCE'
+  | 'HEADING'
+  | 'BOUNDARY';
 export interface Line {
   fileId: ID;
   parentId: ID | undefined;
@@ -43,6 +45,7 @@ export interface Tags {
   includeTag: string[];
   excludeTag: string[];
   hashtag: string[];
+  inheritedTags: string[];
 }
 export type TagsDocument = Tags & Document;
 export type FileDocument = File & Document;
@@ -55,26 +58,36 @@ const readFile = promisify(fs.readFile);
 const writeFile = promisify(fs.writeFile);
 export async function loadData() {
   filesData = from(
-    JSON.parse(await readFile('files.json', 'utf-8')) as FileDocument[]
+    JSON.parse(
+      await readFile('/Users/vamshi/code/personal/tagc/files.json', 'utf-8')
+    ) as FileDocument[]
   );
   linesData = from(
-    JSON.parse(await readFile('lines.json', 'utf-8')) as LineDocument[]
+    JSON.parse(
+      await readFile('/Users/vamshi/code/personal/tagc/lines.json', 'utf-8')
+    ) as LineDocument[]
   );
   tagsData = from(
-    JSON.parse(await readFile('tags.json', 'utf-8')) as TagsDocument[]
+    JSON.parse(
+      await readFile('/Users/vamshi/code/personal/tagc/tags.json', 'utf-8')
+    ) as TagsDocument[]
   );
 }
 export function saveData() {
   const f = JSON.stringify(toArray(filesData), null, 1);
   const l = JSON.stringify(toArray(linesData), null, 1);
   const t = JSON.stringify(toArray(tagsData), null, 1);
-  writeFile('files.json', f, 'utf-8').then(() =>
-    console.log('done writing to files.json')
-  );
-  writeFile('lines.json', l, 'utf-8').then(() =>
-    console.log('done writing to lines.json')
-  );
-  writeFile('tags.json', t, 'utf-8').then(() =>
+  writeFile(
+    '/Users/vamshi/code/personal/tagc/files.json',
+    f,
+    'utf-8'
+  ).then(() => console.log('done writing to files.json'));
+  writeFile(
+    '/Users/vamshi/code/personal/tagc/lines.json',
+    l,
+    'utf-8'
+  ).then(() => console.log('done writing to lines.json'));
+  writeFile('/Users/vamshi/code/personal/tagc/tags.json', t, 'utf-8').then(() =>
     console.log('done writing to tags.json')
   );
 }
@@ -99,14 +112,16 @@ export function addLine(line: Line, _id = nanoid()): LineDocument {
 export function getFileById(fileId: ID) {
   return find((f) => f._id === fileId, filesData) as FileDocument;
 }
-export function getFile(relativePath: string, createNew = false): FileDocument {
+
+// TODO: WTF? seperate write and read
+export function getFile(filePath: string, createNew = false): FileDocument {
   let fileData = find(
-    (f) => f.filePath === relativePath,
+    (f) => f.filePath === filePath,
     filesData
   ) as FileDocument;
   if (!fileData && createNew) {
     filesData = prepend(
-      { filePath: relativePath, children: [], _id: nanoid() }, //TODO: we can use relativepath as id
+      { filePath, children: [], _id: nanoid() }, //TODO: we can use filepath as id
       filesData
     );
     fileData = first(filesData) as FileDocument;
@@ -142,9 +157,9 @@ export function updateLine(line: LineDocument) {
 }
 
 // TAGS
-export function addTags(tags: Tags) {
+export function addTags(tags: Tags): TagsDocument {
   tagsData = prepend({ ...tags, _id: nanoid() }, tagsData);
-  return first(tagsData);
+  return first(tagsData) as TagsDocument;
 }
 
 export function deleteTagsByLineId(lineId: string) {
@@ -160,12 +175,16 @@ export function deleteTags(tagsId: ID) {
   );
   tagsData = remove(tagIndex, 1, tagsData);
 }
+export function getTagsByLine(lineId: ID) {
+  return find((tag) => tag.lineId === lineId, tagsData);
+}
 export function getTags(): List<TagsDocument> {
   return filter(
     (tags) =>
       tags.excludeTag.length > 0 ||
       tags.includeTag.length > 0 ||
-      tags.hashtag.length > 0,
+      tags.hashtag.length > 0 ||
+      tags.inheritedTags.length > 0,
     tagsData
   );
 }

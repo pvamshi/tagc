@@ -1,3 +1,4 @@
+import chokidar from 'chokidar';
 // import { getText, writeText } from './fileio'
 // import { getBlocks, getTargetBlocks, Block, mergeText } from './parser'
 // import {
@@ -22,9 +23,11 @@ import {
   getTags,
   getFileById,
   deleteLine,
-} from './db';
+  getTagsByLine,
+  TagsDocument,
+} from './update-data';
 import { writeText } from './fileio';
-import { relativePath } from './utils';
+import { addToArray, relativePath } from './utils';
 import { keyBy } from 'lodash';
 import { getLineType, parseTags } from './parser';
 import { toArray, append, empty, filter, last, pop, list, find } from 'list';
@@ -37,31 +40,50 @@ import { toArray, append, empty, filter, last, pop, list, find } from 'list';
 // step 5.1 : Delete unused lines and tags
 // step 5.2 : ignore tags in reference
 // step 6: replace their data with results
+//
 // step 7 : change only changed lines
 
 /**
- * Bugs/features yet to fix
- * [ ] Change only updated lines hashes
+ * What prevents us from using it daily ?
+ * [-] Use chokidar
+ * [ ] removing query should remove the results too
+ * [ ] error handling. if something fails, the whole page is cleaned
  * [ ] Parent hash to be inherited to child
+ * [ ] Add a way to distinguish between results and actual text
+ * [ ] adding negative search wont work on child lists
+ *
+ * Future enhancements
+ * [ ] Change only updated lines hashes
  * [ ] Plugin system
+ * [ ] calendar
+ * [ ] todo , done
  * [ ] Code refactor
- * [ ] Use chokidar
  * [ ] text in between lists
- * [ ]
+ * [ ] block for text paragraphs
+ * [ ] index linesdata
+ * [x] find a way to run as a service
+ *
  */
 
-const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
-loadData().then(
-  () =>
-    appendChanges(testFile)
-      .then(async (results: { file: string; content: string }[]) => {
-        return Promise.all(
-          results.map(({ file, content }) => writeText(file, content))
-        );
-      })
-      .then(saveData)
-  // .then(() => console.log(logFile(testFile)))
-);
+// const testFile = '/Users/vamshi/Dropbox/life/test-lists.md';
+
+/* 
+- get file changes
+- get changes
+- update lines based on changes
+- while adding new line
+  - get line type
+  - add line to db
+  - get tags and add to tags db
+- Recreate/update tree structure
+  - add child lines to parent line
+    - copy hashtags of parents to child lines
+- get queries to update
+- group changes per file
+- delete old references and add new ones
+- update the target files and commit them
+
+*/
 
 async function appendChanges(
   filePath: string
@@ -69,13 +91,13 @@ async function appendChanges(
   const changes = await commitChanges(filePath);
   if (changes) {
     const changedFile = await changeFile(changes);
+    return getQueries();
   }
-  return getQueries();
+  return [];
 }
 
 function changeFile({ filePath, changes }: DiffType) {
-  const path = relativePath(filePath);
-  const fileData = getFile(path, true);
+  const fileData = getFile(filePath, true);
   applyChanges(fileData._id, fileData.children, changes);
   updateTreeStructure(fileData.children);
   return fileData;
@@ -139,25 +161,43 @@ function updateTreeStructure(lineIds: ID[], stepLength = 1) {
       }
       const currentParent = last(parentStack);
       if (currentParent) {
-        currentParent.children.push(current._id);
-        current.parentId = currentParent._id;
+        addChild(currentParent, current);
       }
     } else if (current.depth == previous.depth) {
       const currentParent = last(parentStack);
       if (currentParent) {
-        currentParent.children.push(current._id);
-        current.parentId = currentParent._id;
+        addChild(currentParent, current);
       }
     } else if (current.depth > previous.depth) {
       parentStack = append(previous, parentStack);
-      previous.children.push(current._id);
-      current.parentId = previous._id;
+      addChild(previous, current);
       difference = current.depth - previous.depth;
     }
   }
   lines.forEach(updateLine);
 }
 
+function addChild(parent: LineDocument, child: LineDocument) {
+  parent.children.push(child._id);
+  child.parentId = parent._id;
+  let childTags = getTagsByLine(child._id);
+  const parentTags = getTagsByLine(parent._id);
+  if (!childTags) {
+    childTags = addTags({
+      lineId: child._id,
+      inheritedTags: [],
+      hashtag: [],
+      excludeTag: [],
+      includeTag: [],
+    });
+  }
+  if (parentTags && childTags) {
+    childTags.inheritedTags = [
+      ...childTags.inheritedTags,
+      ...parentTags.hashtag,
+    ];
+  }
+}
 function getQueries(): { file: string; content: string }[] {
   const tags = getTags();
 
@@ -167,20 +207,25 @@ function getQueries(): { file: string; content: string }[] {
     includeTags: string[],
     excludeTags: string[],
     hashes: string[]
-  ) =>
-    includeTags.every((tag) => hashes.map(isEqual).some((fn) => fn(tag))) &&
-    excludeTags.every((tag) => hashes.map(isNotEqual).every((fn) => fn(tag)));
+  ) => {
+    console.log({ hashes });
+    return (
+      includeTags.every((tag) => hashes.map(isEqual).some((fn) => fn(tag))) &&
+      excludeTags.every((tag) => hashes.map(isNotEqual).every((fn) => fn(tag)))
+    );
+  };
 
   const queries = filter(
     (tag) => tag.includeTag.length > 0 || tag.excludeTag.length > 0,
     tags
   );
   const hashes = filter((tag) => tag.hashtag.length > 0, tags);
+  console.log({ hash: toArray(hashes) });
   const results = queries
     .map(({ lineId, excludeTag, includeTag }) => ({
       lineId,
-      results: hashes.filter(({ hashtag }) =>
-        compare(includeTag, excludeTag, hashtag)
+      results: hashes.filter(({ hashtag, inheritedTags }) =>
+        compare(includeTag, excludeTag, [...hashtag, ...inheritedTags])
       ),
     }))
     .map(({ results, lineId }) => ({
@@ -210,9 +255,11 @@ function writeToFiles(totalResults: {
     const results = totalResults[fileId];
     const file = getFileById(fileId);
     results.forEach(({ line, results }) => {
-      const linesToAdd = results.flatMap((result) =>
-        addReferenceLine(fileId, result).map((l) => l._id)
-      );
+      const linesToAdd = results
+        .filter((r) => r) //why ?
+        .flatMap((result) =>
+          addReferenceLine(fileId, result).map((l) => l._id)
+        );
       const queryLineId = file.children.indexOf(line._id);
       const linesToReplace = line.referenceLines || 0;
       console.log({ linesToReplace, linesToAdd });
@@ -229,9 +276,29 @@ function writeToFiles(totalResults: {
   });
 }
 
+/***
+    Gave error in this scenario 
+    - [ ] Handle delete query delete what
+  - another 
+
+
+- test messagse #ttt
+  - child composnent
+  - child 23 #imp
+  - another one
+
++ttt +imp
+  - child 23 #imp
+
++ttt 
+
+     */
 function addReferenceLine(fileId: ID, reference: LineDocument): LineDocument[] {
+  if (!reference) {
+    return [];
+  }
   const parentLine = addLine({
-    content: reference.content,
+    content: reference.content, // gave an error , how
     type: 'REFERENCE',
     parentId: undefined,
     children: [],
@@ -264,15 +331,41 @@ export function logFile(fileId: ID): string[] {
 
 // //
 // commitChanges('/Users/vamshi/Dropbox/life/test-lists.md')
-// // chokidar
-// //   .watch('/Users/vamshi/Dropbox')
-// //   .on('all', (event, path) => {
-// //     console.log({ event, path })
-// //   })
-// //   .on('raw', (ev, path, details) => {
-// //     console.log({ ev, path, details })
-// //   })
+
+// console.log(process.argv[2]);
+// if (process.argv[2]) {
+loadData().then(
+  () =>
+    chokidar
+      .watch([
+        '/Users/vamshi/Dropbox/life/**/*.md',
+        '/Users/vamshi/Dropbox/work/**/*.md',
+        '/Users/vamshi/Dropbox/tagc/**/*.md',
+      ])
+      .on('change', (path, stats) => {
+        console.log({ stats, path });
+
+        // appendChanges(process.argv[2])
+        appendChanges(path)
+          .then(async (results: { file: string; content: string }[]) => {
+            return Promise.all(
+              results.map(({ file, content }) => writeText(file, content))
+            );
+          })
+          .then(saveData);
+      })
+  //     .on('raw', (event, path, details) => {
+  //       // internal
+  //       console.log('Raw event info:', event, path, details);
+  //     })
+  // // .then(() => console.log(logFile(testFile)))
+);
+// }
+// .on('raw', (ev, path, details) => {
+//   console.log({ ev, path, details });
+// });
 // //
+// }
 // const fileTexts: { [file: string]: string } = {}
 // // get hashtags
 // //

@@ -1,0 +1,39 @@
+head	1.1;
+access;
+symbols;
+locks
+	vamshi:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	2021.04.07.06.56.43;	author vamshi;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@- [ ] Handle delete query delete what
+  - another 
+
+- some random text #tes
+  - child text
+  - child 3
+  - chile tes tim
+  - anothds
+
++tes
+- some random text #tes
+  - child text
+  - child 3
+  - chile tes tim
+  - anothds
+@
