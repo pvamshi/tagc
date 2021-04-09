@@ -1,19 +1,3 @@
-import {
-  findIndex,
-  empty,
-  find,
-  first,
-  from,
-  prepend,
-  toArray,
-  update,
-  filter,
-  List,
-  remove,
-} from 'list/methods';
-import { promisify } from 'util';
-import fs from 'fs';
-import { nanoid } from 'nanoid';
 import Loki from 'lokijs';
 export type ID = number;
 export type Document = { _id: ID };
@@ -108,4 +92,8 @@ export function createOrGetFile(
 
 export function deleteLine($loki: ID, lines: Collection<Line>) {
   lines.removeWhere({ $loki });
+}
+
+export function getLine($loki: ID, lines: Collection<Line>) {
+  return lines.findOne({ $loki });
 }

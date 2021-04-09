@@ -4,5 +4,6 @@
     "/Users/vamshi/Dropbox/work/**/*.md",
     "/Users/vamshi/Dropbox/tagc/**/*.md"
   ],
-  "lineSeperator": "\n"
+  "lineSeperator": "\n",
+  "softTabSize": 2
 }

@@ -2,7 +2,8 @@ import chokidar from 'chokidar';
 import { getFileChanges } from './commit-changes';
 import { projects } from './config.json';
 import { createOrGetFile, initDB } from './db';
-import { updateLines } from './lines';
+import { updateLines, updateTreeStructure } from './lines';
+import { addTagsToChanges } from './tags';
 
 async function start() {
   try {
@@ -11,7 +12,14 @@ async function start() {
       //- get file changes
       const changes = await getFileChanges(filePath);
       // save changes in db
-      updateLines(changes, filePath, lines, files);
+      const { addedLines, fileId } = updateLines(
+        changes,
+        filePath,
+        lines,
+        files
+      );
+      addTagsToChanges(addedLines, lines, tags);
+      updateTreeStructure(fileId, lines, files);
 
       /* 
 - get changes

@@ -1,23 +1,25 @@
 import hashtag from './lib/hashtags';
-import linetype from './lib/linetype';
-import target from './lib/target';
 import { mergeWith, pipe, reduce } from 'lodash/fp';
 import nearley from 'nearley';
-import { getLine, LineType, Tags } from './update-data';
-export type BlockType = 'TEXT' | 'LIST' | 'TASK' | 'REFERENCE' | 'HEADING';
-export interface Block {
-  type: BlockType;
-  parent: Block;
-  _id: string;
-  children: Block[];
+import { getLine, Line, Tags, ID } from './db';
+
+export function addTagsToChanges(
+  lineIds: ID[],
+  lines: Collection<Line>,
+  tags: Collection<Tags>
+) {
+  lineIds.forEach((lineId) => {
+    const tagsObj = parseTags(lineId, lines);
+    tags.insertOne(tagsObj);
+  });
 }
 
-export function parseTags(lineId: string): Tags {
-  const block = getLine(lineId);
-  if (!block) {
+function parseTags(lineId: ID, lines: Collection<Line>): Tags {
+  const line = getLine(lineId, lines);
+  if (!line) {
     throw new Error('no line exists with blockId:' + lineId);
   }
-  if (block.type === 'REFERENCE') {
+  if (line.type === 'REFERENCE') {
     return {
       lineId,
       includeTag: [],
@@ -26,7 +28,7 @@ export function parseTags(lineId: string): Tags {
       inheritedTags: [],
     };
   }
-  const text = block.content;
+  const text = line.content;
   const tagsParser = new nearley.Parser(nearley.Grammar.fromCompiled(hashtag));
   tagsParser.feed(text);
   const res: Tags = pipe(
