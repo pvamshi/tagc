@@ -21,8 +21,9 @@ export function updateLines(
   changeMap: Map<number, Change[]>,
   filePath: string,
   lines: Collection<Line>,
-  files: Collection<File>
-): { addedLines: ID[]; fileId: ID } {
+  files: Collection<File>,
+  tags: Collection<Tags>
+): { addedLines: ID[]; deletedLines: ID[]; fileId: ID } {
   const file = createOrGetFile(filePath, files);
   // make changes for each line
   let deletedLines: ID[] = [];
@@ -41,8 +42,17 @@ export function updateLines(
       deletedLines = deletedLines.concat(file.children.splice(lineNo, 1));
     }
   });
-  deletedLines.forEach((line) => deleteLine(line, lines));
-  return { addedLines, fileId: file.$loki };
+  return { addedLines, deletedLines, fileId: file.$loki };
+}
+
+export function deleteLines(
+  lineIds: ID[],
+  linesDB: Collection<Line>,
+  tagsDB: Collection<Tags>
+) {
+  lineIds.forEach((line) => deleteLine(line, linesDB));
+  linesDB.removeWhere({ $loki: { $in: lineIds } });
+  tagsDB.removeWhere({ lineId: { $in: lineIds } });
 }
 
 export function updateTreeStructure(

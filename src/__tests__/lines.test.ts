@@ -22,7 +22,7 @@ describe('updateLines', () => {
       [3, [{ type: 'add', content: '  - [ ] line 4' } as Change]],
       [4, [{ type: 'add', content: '  - [x] line 5' } as Change]],
     ]);
-    const newLines = updateLines(changes, 'file1.md', lines, files);
+    const newLines = updateLines(changes, 'file1.md', lines, files, tags);
     expect(newLines.addedLines.length).toBe(5);
     expect(files.count()).toBe(1);
     expect(lines.count()).toBe(5);
@@ -65,9 +65,17 @@ describe('updateLines', () => {
         ],
       ],
     ]);
-    updateLines(changes, 'file1.md', lines, files);
+    const { addedLines, deletedLines } = updateLines(
+      changes,
+      'file1.md',
+      lines,
+      files,
+      tags
+    );
     expect(files.count()).toBe(1);
-    expect(lines.count()).toBe(6);
+    expect(lines.count()).toBe(7);
+    expect(addedLines.length).toBe(2);
+    expect(deletedLines.length).toBe(1);
     const linesInFile = fileResults[0].children.map((lineId) =>
       lines.findOne({ $loki: lineId })
     );
@@ -86,9 +94,17 @@ describe('updateLines', () => {
     const changes = new Map([
       [1, [{ type: 'del', content: '- line 6' } as Change]],
     ]);
-    updateLines(changes, 'file1.md', lines, files);
+    const { addedLines, deletedLines } = updateLines(
+      changes,
+      'file1.md',
+      lines,
+      files,
+      tags
+    );
     expect(files.count()).toBe(1);
-    expect(lines.count()).toBe(5);
+    expect(lines.count()).toBe(7); // not 6 becauese we have one deleted line from previous test
+    expect(deletedLines.length).toBe(1);
+    expect(addedLines.length).toBe(0);
     const linesInFile = fileResults[0].children.map((lineId) =>
       lines.findOne({ $loki: lineId })
     );
@@ -134,7 +150,13 @@ describe('updateLines', () => {
       .map((line) => [{ type: 'add', content: line } as Change])
       .entries();
     const filePath = 'file2.md';
-    const { fileId } = updateLines(new Map(changes), filePath, lines, files);
+    const { fileId } = updateLines(
+      new Map(changes),
+      filePath,
+      lines,
+      files,
+      tags
+    );
     updateTreeStructure(fileId, lines, files, tags);
     const fileResult = files.findOne({ filePath });
     expect(fileResult).not.toBeNull();
@@ -159,7 +181,13 @@ describe('updateLines', () => {
       .map((line) => [{ type: 'add', content: line } as Change])
       .entries();
     const filePath = 'file3.md';
-    const { fileId } = updateLines(new Map(changes), filePath, lines, files);
+    const { fileId } = updateLines(
+      new Map(changes),
+      filePath,
+      lines,
+      files,
+      tags
+    );
     updateTreeStructure(fileId, lines, files, tags);
     const fileResult = files.findOne({ filePath });
     expect(fileResult).not.toBeNull();
@@ -185,7 +213,13 @@ describe('updateLines', () => {
       .map((line) => [{ type: 'add', content: line } as Change])
       .entries();
     const filePath = 'file4.md';
-    const { fileId } = updateLines(new Map(changes), filePath, lines, files);
+    const { fileId } = updateLines(
+      new Map(changes),
+      filePath,
+      lines,
+      files,
+      tags
+    );
     updateTreeStructure(fileId, lines, files, tags);
     const fileResult = files.findOne({ filePath });
     expect(fileResult).not.toBeNull();
@@ -198,7 +232,7 @@ describe('updateLines', () => {
   });
 });
 
-function prepareDB(): Promise<{
+export function prepareDB(): Promise<{
   lines: Collection<Line>;
   files: Collection<File>;
   tags: Collection<Tags>;

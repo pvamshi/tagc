@@ -12,15 +12,16 @@ async function start() {
       //- get file changes
       const changes = await getFileChanges(filePath);
       // save changes in db
-      const { addedLines, fileId } = updateLines(
+      const { addedLines, deletedLines, fileId } = updateLines(
         changes,
         filePath,
         lines,
-        files
+        files,
+        tags
       );
       addTagsToChanges(addedLines, lines, tags);
-      updateTreeStructure(fileId, lines, files);
-
+      updateTreeStructure(fileId, lines, files, tags);
+      // collect all hashes newly added, collect all hashes deleted
       /* 
 - get changes
 - update lines based on changes

@@ -1,7 +1,7 @@
 import hashtag from './lib/hashtags';
 import { mergeWith, pipe, reduce } from 'lodash/fp';
 import nearley from 'nearley';
-import { getLine, Line, Tags, ID } from './db';
+import { getLine, Line, Tags, ID, LineDocument, TagsDocument } from './db';
 
 export function addTagsToChanges(
   lineIds: ID[],
@@ -14,6 +14,10 @@ export function addTagsToChanges(
   });
 }
 
+export function tagsInLines(lineIds: ID[], tagsDB: Collection<Tags>): string[] {
+  const tags = tagsDB.find({ lineId: { $in: lineIds } });
+  return [...new Set(...tags.map((tag: TagsDocument) => tag.hashtag))];
+}
 function parseTags(lineId: ID, lines: Collection<Line>): Tags {
   const line = getLine(lineId, lines);
   if (!line) {
