@@ -2,6 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs';
 import parseDiff, { AddChange, DeleteChange } from 'parse-diff';
+import { lineSeperator } from './config.json';
 // import { reduce, keyBy, mapValues, map, pipe, prop } from 'lodash/fp';
 // var execShPromise = require('exec-sh').promise
 
@@ -18,6 +19,20 @@ export interface DiffType {
 export async function commitOnly(filePath: string) {
   let { stderr } = await asyncExec(`echo "."| ci -l ${filePath}`);
   return stderr;
+}
+export type ChangeType = 'del' | 'add';
+export type Change = { type: ChangeType; content: string };
+
+function decodeCommitMessage(commitMessage: string) {
+  const commitStatusMessage = commitMessage.split(lineSeperator)[1].split(';');
+  const status = {
+    modified: false,
+  };
+  if (commitStatusMessage[0] === 'file is unchanged') {
+    status.modified = false;
+  } else if (commitStatusMessage[1] === 'initial revision: 1.1') {
+    // first commit
+  }
 }
 export async function commitChanges(
   filePath: string

@@ -39,21 +39,3 @@ export function parseTags(lineId: string): Tags {
   res.hashtag = res.hashtag.filter((tag) => !tag.match(/#+/));
   return res;
 }
-
-export function getLineType(
-  content: string
-):
-  | { type: Exclude<LineType, 'TASK'>; depth: number; done: undefined }
-  | { type: 'TASK'; done: boolean; depth: number } {
-  const lineParser = new nearley.Parser(nearley.Grammar.fromCompiled(linetype));
-  lineParser.feed(content);
-  const line = lineParser.results[0];
-  if (line.type === 'LIST') {
-    if (line.task) {
-      return { type: 'TASK', depth: line.spaces, done: line.done };
-    }
-    return { type: 'LIST', depth: line.spaces, done: undefined };
-  } else {
-    return { type: 'TEXT', depth: 0, done: undefined }; // TODO: handle rest of the types
-  }
-}

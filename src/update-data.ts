@@ -14,7 +14,7 @@ import {
 import { promisify } from 'util';
 import fs from 'fs';
 import { nanoid } from 'nanoid';
-
+import Loki from 'lokijs';
 export type ID = string;
 export type Document = { _id: ID };
 export interface File {
@@ -193,3 +193,53 @@ export function getTags(): List<TagsDocument> {
 //   const newList = prepend(item, list);
 //   return [first(newList), newList];
 // }
+export async function initDB(): Promise<{
+  lines: Collection<Line>;
+  files: Collection<File>;
+  tags: Collection<Tags>;
+}> {
+  let lines: Collection<Line> | null;
+  let files: Collection<File> | null;
+  let tags: Collection<Tags> | null;
+  return new Promise((resolve, reject): void => {
+    try {
+      const db = new Loki('tagc.db', {
+        autoload: true,
+        autoloadCallback: () => {
+          lines = db.getCollection('lines');
+          if (lines === null) {
+            lines = db.addCollection('lines', { indices: ['fileId'] });
+          }
+          tags = db.getCollection('tags');
+          if (tags === null) {
+            tags = db.addCollection('tags', { indices: ['lineId'] });
+          }
+          files = db.getCollection('files');
+          if (files === null) {
+            files = db.addCollection('files', { indices: ['filePath'] });
+          }
+          if (lines !== null && files !== null && tags !== null) {
+            resolve({ lines, files, tags });
+          } else {
+            reject('something went wrong while loading DB');
+          }
+        },
+        autosave: true,
+        autosaveInterval: 4000,
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+export function createOrGetFile(
+  filePath: string,
+  files: Collection<File>
+): File & LokiObj {
+  const fileResults = files.find({ filePath });
+  if (fileResults.length === 0) {
+    files.insertOne({ filePath, children: [] });
+  }
+  return fileResults[0];
+}
