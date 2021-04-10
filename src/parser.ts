@@ -17,7 +17,7 @@ export function parseTags(lineId: string): Tags {
   if (!block) {
     throw new Error('no line exists with blockId:' + lineId);
   }
-  if (block.type === 'REFERENCE') {
+  if (block.referenceLineId) {
     return {
       lineId,
       includeTag: [],

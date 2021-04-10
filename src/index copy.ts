@@ -52,7 +52,7 @@ import { toArray, append, empty, filter, last, pop, list, find } from 'list';
  * [ ] removing query should remove the results too
  * [ ] error handling. if something fails, the whole page is cleaned
  * [ ] Parent hash to be inherited to child
- * [ ] Add a way to distinguish between results and actual text
+ * [ ] Add a way to distifguish between results and actual text
  * [ ] adding negative search wont work on child lists
  *
  * Future enhancements

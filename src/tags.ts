@@ -1,29 +1,32 @@
-import hashtag from './lib/hashtags';
 import { mergeWith, pipe, reduce } from 'lodash/fp';
 import nearley from 'nearley';
-import { getLine, Line, Tags, ID, LineDocument, TagsDocument } from './db';
+import { parse } from 'node:path';
+import { getLine, ID, Line, Tags, TagsDocument } from './db';
+import hashtag from './lib/hashtags';
 
 export function addTagsToChanges(
   lineIds: ID[],
-  lines: Collection<Line>,
-  tags: Collection<Tags>
+  linesDB: Collection<Line>,
+  tagsDB: Collection<Tags>
 ) {
-  lineIds.forEach((lineId) => {
-    const tagsObj = parseTags(lineId, lines);
-    tags.insertOne(tagsObj);
-  });
+  const tags = lineIds.map((lineId) => parseTags(lineId, linesDB));
+  const addedTags = tagsDB.insert(tags);
+  if (!addedTags) {
+    throw new Error('error while adding tags');
+  }
+  return Array.isArray(addedTags) ? addedTags : [addedTags];
 }
 
 export function tagsInLines(lineIds: ID[], tagsDB: Collection<Tags>): string[] {
   const tags = tagsDB.find({ lineId: { $in: lineIds } });
-  return [...new Set(...tags.map((tag: TagsDocument) => tag.hashtag))];
+  return [...new Set(tags.flatMap((tag: TagsDocument) => tag.hashtag))];
 }
 function parseTags(lineId: ID, lines: Collection<Line>): Tags {
   const line = getLine(lineId, lines);
   if (!line) {
     throw new Error('no line exists with blockId:' + lineId);
   }
-  if (line.type === 'REFERENCE') {
+  if (line.referenceLineId) {
     return {
       lineId,
       includeTag: [],
@@ -44,4 +47,12 @@ function parseTags(lineId: ID, lines: Collection<Line>): Tags {
   )(tagsParser.results);
   res.hashtag = res.hashtag.filter((tag) => !tag.match(/#+/));
   return res;
+}
+
+export function isQuery(lineId: ID, tagsDB: Collection<Tags>) {
+  const tags = tagsDB.findOne({ lineId });
+  if (!tags) {
+    return false;
+  }
+  return tags.excludeTag.length === 0 && tags.includeTag.length === 0;
 }

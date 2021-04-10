@@ -5,5 +5,7 @@
     "/Users/vamshi/Dropbox/tagc/**/*.md"
   ],
   "lineSeperator": "\n",
-  "softTabSize": 2
+  "softTabSize": 2,
+  "queryResultBorderStart": "┏━━━━━━━━━━┉┉",
+  "queryResultBorderEnd": "┗━━━━━━━━━━┉┉"
 }

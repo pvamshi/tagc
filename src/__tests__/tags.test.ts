@@ -5,7 +5,8 @@ import { prepareDB } from '../__tests__/lines.test';
 describe('tags', () => {
   let tags: Collection<Tags>;
   beforeAll(async () => {
-    const { tags } = await prepareDB();
+    const db = await prepareDB();
+    tags = db.tags;
   });
   it('should collect all hashes from different lines', () => {
     const tagsRaw: Tags[] = [
@@ -40,9 +41,6 @@ describe('tags', () => {
     ];
     tags.insert(tagsRaw);
     const tagsCollected = tagsInLines([0, 1, 2, 3], tags);
-    expect(tagsCollected.includes('tag1')).toBeTruthy();
-    expect(tagsCollected.includes('tag2')).toBeTruthy();
-    expect(tagsCollected.includes('tag3')).toBeTruthy();
-    expect(tagsCollected.includes('tag4')).toBeFalsy();
+    expect(tagsCollected.sort()).toEqual(['tag1', 'tag2', 'tag3']);
   });
 });

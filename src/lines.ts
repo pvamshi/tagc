@@ -1,13 +1,22 @@
 import { keyBy } from 'lodash';
-import { last } from 'lodash/fp';
+import { last, prop } from 'lodash/fp';
 import nearley from 'nearley';
+import { log } from './main';
 import { Change } from './commit-changes/models';
-import { softTabSize } from './config.json';
 import {
+  lineSeperator,
+  softTabSize,
+  queryResultBorderStart,
+  queryResultBorderEnd,
+} from './config.json';
+import {
+  addLine,
   createOrGetFile,
   deleteLine,
   File,
   FileDocument,
+  getFile,
+  getLine,
   ID,
   Line,
   LineDocument,
@@ -16,6 +25,7 @@ import {
   TagsDocument,
 } from './db';
 import linetype from './lib/linetype';
+import { isQuery } from './tags';
 
 export function updateLines(
   changeMap: Map<number, Change[]>,
@@ -29,6 +39,16 @@ export function updateLines(
   let deletedLines: ID[] = [];
   let addedLines: ID[] = [];
   changeMap.forEach((changes, lineNo) => {
+    if (
+      shouldIgnore(
+        changes.length === 1 && changes[0].type === 'add',
+        file,
+        lineNo,
+        lines
+      )
+    ) {
+      return;
+    }
     if (hasAddChange(changes)) {
       const [delLines, addLines] = applyAddOrUpdateChanges(
         lineNo,
@@ -39,22 +59,46 @@ export function updateLines(
       deletedLines = deletedLines.concat(delLines);
       addedLines.push(addLines);
     } else {
-      deletedLines = deletedLines.concat(file.children.splice(lineNo, 1));
+      const linesToDelete = isQuery(file.children[lineNo], tags)
+        ? getLine(file.children[lineNo], lines).queryResults
+        : 1;
+
+      deletedLines = deletedLines.concat(
+        file.children.splice(lineNo, linesToDelete)
+      );
     }
   });
   return { addedLines, deletedLines, fileId: file.$loki };
 }
 
+function shouldIgnore(
+  isAddOnly: boolean,
+  file: File,
+  lineIndex: number,
+  linesDB: Collection<Line>
+) {
+  if (lineIndex === 0) {
+    return false;
+  }
+  if (isAddOnly) {
+    // if adding , check the previous line
+    const line = getLine(file.children[lineIndex - 1], linesDB);
+    return !!line.referenceLineId;
+  }
+  // if update check the line being updated
+  const line = getLine(file.children[lineIndex], linesDB);
+  return !!(line.referenceLineId || line.type === 'BOUNDARY');
+}
 export function deleteLines(
   lineIds: ID[],
   linesDB: Collection<Line>,
   tagsDB: Collection<Tags>
 ) {
-  lineIds.forEach((line) => deleteLine(line, linesDB));
   linesDB.removeWhere({ $loki: { $in: lineIds } });
   tagsDB.removeWhere({ lineId: { $in: lineIds } });
 }
 
+// TODO:  Handle references
 export function updateTreeStructure(
   fileId: ID,
   linesDB: Collection<Line>,
@@ -68,15 +112,16 @@ export function updateTreeStructure(
         fileId
     );
   }
-  const lines = file.children
-    .map(($loki) => linesDB.findOne({ $loki }))
-    .filter((line) => line !== null) as LineDocument[]; // TODO: do we need to throw an error here if lineid dont exist
+  const lines = file.children.map(($loki) => getLine($loki, linesDB));
 
   let parentStack: LineDocument[] = [];
   let difference = 0;
   for (let i = 1; i < lines.length; i++) {
     const current = lines[i];
     const previous = lines[i - 1];
+    if (current.type === 'BOUNDARY' || current.referenceLineId) {
+      continue; // if they are responses dont bother about them
+    }
     if (current.depth < previous.depth) {
       // invalid parent pointer TODO:
       difference = difference - (previous.depth - current.depth);
@@ -105,6 +150,134 @@ export function updateTreeStructure(
   lines.forEach((line) => linesDB.update(line));
 }
 
+export function updateQueryResults(
+  queryResults: { queryLineId: ID; results: LineDocument[] }[],
+  linesDB: Collection<Line>,
+  filesDB: Collection<File>
+) {
+  const fileIds = queryResults.map(({ queryLineId, results }) => {
+    const queryLine = getLine(queryLineId, linesDB);
+    const file = getFile(queryLine.fileId, filesDB);
+    const currentResults = queryLine.queryResults;
+    const lineIndex = file.children.indexOf(queryLineId);
+    const newResults = addBorders(results, queryLine.fileId, linesDB);
+    const deletedLines = file.children.splice(
+      lineIndex + 1,
+      currentResults || 0,
+      ...newResults.map((res: LineDocument) => res.$loki)
+    );
+    queryLine.queryResults = newResults.length;
+    linesDB.update(queryLine);
+    filesDB.update(file);
+    deletedLines.forEach((line) => deleteLine(line, linesDB));
+    return file.$loki;
+  });
+  return [...new Set(fileIds)]; // dont update file twice
+}
+
+function addBorders(
+  results: LineDocument[],
+  fileId: ID,
+  linesDB: Collection<Line>
+) {
+  return [
+    addLine(
+      {
+        type: 'BOUNDARY',
+        content: queryResultBorderStart,
+        fileId,
+        parentId: undefined,
+        children: [],
+        depth: 0,
+      },
+      linesDB
+    ),
+    ...results,
+    addLine(
+      {
+        type: 'BOUNDARY',
+        content: queryResultBorderEnd,
+        fileId,
+        parentId: undefined,
+        children: [],
+        depth: 0,
+      },
+      linesDB
+    ),
+  ];
+}
+export function getQueryResultsLines(
+  queryResults: { queryLineId: ID; results: Tags[] }[],
+  linesDB: Collection<Line>
+) {
+  const output = queryResults.map(({ queryLineId, results }) => {
+    return {
+      queryLineId,
+      results: results
+        .map((result) =>
+          createReference(
+            result.lineId,
+            undefined,
+            getLine(queryLineId, linesDB).fileId,
+            linesDB
+          )
+        )
+        .flatMap((reference) => getResultWithChildren(reference, linesDB)),
+    };
+  });
+  log({ output });
+  return output;
+}
+
+export function getFileText(
+  fileID: ID,
+  linesDB: Collection<Line>,
+  filesDB: Collection<File>
+): { filePath: string; text: string } {
+  const { filePath, children } = getFile(fileID, filesDB);
+  return {
+    filePath,
+    text: children
+      .map((lineID) => getLine(lineID, linesDB))
+      .map((line) => line.content)
+      .join(lineSeperator),
+  };
+}
+
+function getResultWithChildren(
+  line: LineDocument,
+  linesDB: Collection<Line>
+): LineDocument[] {
+  const children = line.children.flatMap((childId) =>
+    getResultWithChildren(getLine(childId, linesDB), linesDB)
+  );
+  return [line, ...children];
+}
+
+function createReference(
+  lineId: ID,
+  parentLineId: ID | undefined,
+  fileId: ID,
+  linesDB: Collection<Line>
+): LineDocument {
+  const line = getLine(lineId, linesDB);
+  const addedRef = linesDB.insertOne({
+    type: line.type,
+    content: line.content,
+    children: line.children
+      .map((childId) => createReference(childId, line.$loki, fileId, linesDB))
+      .map((child) => child.$loki),
+    fileId,
+    done: line.done,
+    referenceLineId: line.$loki,
+    parentId: parentLineId,
+    depth: line.depth,
+  });
+  if (!addedRef) {
+    throw new Error('error while adding reference');
+  }
+  return addedRef;
+}
 function addChild(
   parent: LineDocument,
   child: LineDocument,

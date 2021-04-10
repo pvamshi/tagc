@@ -6,13 +6,7 @@ export interface File {
   children: ID[];
 }
 
-export type LineType =
-  | 'TEXT'
-  | 'LIST'
-  | 'TASK'
-  | 'REFERENCE'
-  | 'HEADING'
-  | 'BOUNDARY';
+export type LineType = 'TEXT' | 'LIST' | 'TASK' | 'HEADING' | 'BOUNDARY';
 export interface Line {
   fileId: ID;
   parentId: ID | undefined;
@@ -22,7 +16,7 @@ export interface Line {
   children: ID[];
   depth: number;
   referenceLineId?: ID;
-  referenceLines?: number;
+  queryResults?: number;
 }
 export interface Tags {
   lineId: ID;
@@ -94,6 +88,25 @@ export function deleteLine($loki: ID, lines: Collection<Line>) {
   lines.removeWhere({ $loki });
 }
 
-export function getLine($loki: ID, lines: Collection<Line>) {
-  return lines.findOne({ $loki });
+export function getLine($loki: ID, lines: Collection<Line>): LineDocument {
+  const line = lines.findOne({ $loki });
+  if (!line) {
+    throw new Error('error while fetching line with id ' + $loki);
+  }
+  return line;
+}
+
+export function getFile($loki: ID, filesDB: Collection<File>): FileDocument {
+  const file = filesDB.findOne({ $loki });
+  if (!file) {
+    throw new Error('error while fetching file with id ' + $loki);
+  }
+  return file;
+}
+export function addLine(line: Line, linesDB: Collection<Line>) {
+  const newLine = linesDB.insertOne(line);
+  if (!newLine) {
+    throw new Error('Error while adding new line');
+  }
+  return newLine;
 }
