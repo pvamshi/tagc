@@ -17,11 +17,12 @@ import { getFileText } from '../lines';
     child line #tag2
   +tag1 +tag2
  - [ ] adding just below query response is valid
- - [ ] tree structure should also ignore query responses
- - [ ] making changes in query responses should be ignored
- - [ ] query line updated should update the references 
- - [ ] query line deleted should delete the responses too
- - 
+ - [x] tree structure should also ignore query responses
+ - [x] making changes in query responses should be ignored
+ - [x] query line updated should update the references 
+ - [x] query line deleted should delete the responses too
+ - [ ] deleting a simple line is also a change 
+ - [ ] inherited tags repeated multiple times, should always be unique
  */
 describe('main tests', () => {
   let filesDB: Collection<File>;
@@ -70,7 +71,7 @@ describe('main tests', () => {
       linesDB,
       tagsDB
     );
-    expect(fileChanges.length).toBe(0);
+    expect(fileChanges.length).toBe(1);
   });
   test('add a query and get file update', () => {
     const fileChanges = runtest(
@@ -231,6 +232,32 @@ ${queryResultBorderStart}
 - line x #tag1 #tag2
 
 ${queryResultBorderEnd}`);
+  });
+  test('changes in query response should be ignored', () => {
+    const fileChanges = runtest(
+      'file1.md',
+      new Map([
+        [
+          10,
+          [
+            { type: 'del', content: '- line x #tag1 #tag2' },
+            { type: 'add', content: 'sdfasfsf' },
+          ],
+        ],
+        [
+          12,
+          [
+            { type: 'del', content: '- line x #tag1 #tag2' },
+            { type: 'add', content: 'sdfasfsf' },
+          ],
+        ],
+      ]),
+      filesDB,
+      linesDB,
+      tagsDB
+    );
+
+    expect(fileChanges.length).toBe(0);
   });
   test('deleting query should delete results too', () => {
     const fileChanges = runtest(

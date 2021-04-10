@@ -2,6 +2,7 @@ import { mergeWith, pipe, reduce } from 'lodash/fp';
 import nearley from 'nearley';
 import { getLine, ID, Line, Tags, TagsDocument } from './db';
 import hashtag from './lib/hashtags';
+import { log } from './main';
 
 export function addTagsToChanges(
   lineIds: ID[],
@@ -61,10 +62,13 @@ export function getTagsFromDeleteLines(
   linesDB: Collection<Line>,
   tagsDB: Collection<Tags>
 ): string[] {
-  return deletedLines
+  const tags = deletedLines
     .map((lineId) => getLine(lineId, linesDB))
     .filter((line) => line.type === 'BOUNDARY' || line.referenceLineId)
-    .map((line) => tagsDB.findOne({ lineId: line.$loki }))
+    .map((line) => tagsDB.findOne({ lineId: line.$loki }));
+
+  log({ tags });
+  return tags
     .filter((tag) => tag && tag.inheritedTags.length !== 0)
     .flatMap((tag) => tag?.inheritedTags) as string[];
 }

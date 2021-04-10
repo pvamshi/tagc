@@ -1,5 +1,3 @@
-import { difference } from 'lodash';
-import { keyBy } from 'lodash/fp';
 import parseDiff, { AddChange, DeleteChange } from 'parse-diff';
 import { lineSeperator } from '../config.json';
 import { getText } from '../fileio';
@@ -66,14 +64,10 @@ async function getDiff(
     console.log({ command });
     const diff = await asyncExec(command);
     console.log({ stdout: diff.stdout });
-    if (diff.stderr) {
-      throw new Error(
-        'Error output while running diff command: ' + diff.stderr
-      );
-    }
-    return diff.stdout;
+    res = diff.stderr;
   } catch (err) {
     res = err.stderr + err.stdout;
+    console.log({ res });
     // throw new Error('Error while running diff command: ' + err);
   }
   return res;

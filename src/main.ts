@@ -28,6 +28,7 @@ export function getFilesToUpdate(
   );
   const addedTags = addTagsToChanges(addedLines, lines, tags);
   updateTreeStructure(fileId, lines, files, tags);
+  log(getTagsFromDeleteLines(deletedLines, lines, tags));
   const updatedTags = [
     ...new Set([
       ...addedTags.flatMap((tag) =>
@@ -38,7 +39,7 @@ export function getFilesToUpdate(
   ];
 
   deleteLines(deletedLines, lines, tags);
-  if (deletedLines.length > 1) {
+  if (deletedLines.length > 0) {
     // may be query is deleted ?
     filesToUpdate.push(fileId);
   }

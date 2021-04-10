@@ -173,7 +173,7 @@ export function updateQueryResults(
     deletedLines.forEach((line) => deleteLine(line, linesDB));
     return file.$loki;
   });
-  return [...new Set(fileIds)]; // dont update file twice
+  return fileIds;
 }
 
 function addBorders(
