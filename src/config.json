@@ -6,6 +6,6 @@
   ],
   "lineSeperator": "\n",
   "softTabSize": 2,
-  "queryResultBorderStart": "┏━━━━━━━━━━┉┉",
-  "queryResultBorderEnd": "┗━━━━━━━━━━┉┉"
+  "queryResultBorderStart": "╭┄┄┄┄┄┄┄┄┄┄┄┄",
+  "queryResultBorderEnd": "╰┄┄┄┄┄┄┄┄┄┄┄┄"
 }

@@ -46,6 +46,7 @@ function parseTags(lineId: ID, lines: Collection<Line>): Tags {
     )
   )(tagsParser.results);
   res.hashtag = res.hashtag.filter((tag) => !tag.match(/#+/));
+  res.inheritedTags = [...res.hashtag];
   return res;
 }
 

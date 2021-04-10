@@ -37,6 +37,7 @@ export function parseTags(lineId: string): Tags {
     )
   )(tagsParser.results);
   res.hashtag = res.hashtag.filter((tag) => !tag.match(/#+/));
+  res.inheritedTags = [...res.hashtag];
   return res;
 }
 

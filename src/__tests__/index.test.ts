@@ -226,10 +226,7 @@ ${queryResultBorderEnd}`);
       tagsDB
     );
 
-    console.log(fileChanges[0].text);
-
     expect(fileChanges.length).toBe(1);
-    // console.log(fileChanges[0].text);
     expect(fileChanges[0].text).toBe(`
 - line x #tag1 #tag2
 - line 1
@@ -241,6 +238,7 @@ ${queryResultBorderEnd}`);
 
 +tag1 +tag2
 ${queryResultBorderStart}
+  - line 2.1.2 #tag2
 - line x #tag1 #tag2
 ${queryResultBorderEnd}`);
   });

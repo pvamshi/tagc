@@ -304,7 +304,7 @@ function addChild(
   if (parentTags && childTags) {
     childTags.inheritedTags = [
       ...childTags.inheritedTags,
-      ...parentTags.hashtag,
+      ...parentTags.inheritedTags,
     ];
   }
 }

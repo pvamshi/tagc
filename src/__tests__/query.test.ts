@@ -1,4 +1,5 @@
 import { Tags } from '../db';
+import { log } from '../main';
 import { getQueries, getQueryResults } from '../query';
 import { prepareDB } from './lines.test';
 
@@ -51,21 +52,21 @@ describe('query', () => {
         hashtag: ['tag1', 'tag2'],
         excludeTag: [],
         includeTag: [],
-        inheritedTags: [],
+        inheritedTags: ['tag1', 'tag2'],
       },
       {
         lineId: 1,
         hashtag: ['tag2'],
         excludeTag: [],
         includeTag: [],
-        inheritedTags: [],
+        inheritedTags: ['tag2'],
       },
       {
         lineId: 2,
         hashtag: ['tag3', 'tag1'],
         excludeTag: [],
         includeTag: [],
-        inheritedTags: [],
+        inheritedTags: ['tag3', 'tag1'],
       },
       {
         lineId: 3,
@@ -73,6 +74,14 @@ describe('query', () => {
         excludeTag: [],
         includeTag: [],
         inheritedTags: [],
+      },
+
+      {
+        lineId: 4,
+        hashtag: ['tag2'],
+        excludeTag: [],
+        includeTag: [],
+        inheritedTags: ['tag1', 'tag2'],
       },
     ];
     tags.insert(tagsRaw);
@@ -93,7 +102,6 @@ describe('query', () => {
           inheritedTags: [],
         },
         {
-          // fail
           lineId: 0,
           includeTag: ['tag1', 'tag2'],
           excludeTag: [],
@@ -120,9 +128,9 @@ describe('query', () => {
     expect(results.map(({ results }) => results.length)).toEqual([
       2,
       1,
-      1,
-      1,
       2,
+      1,
+      3,
     ]);
   });
   // consider inherited tags too while querying

@@ -1,4 +1,5 @@
 import { Tags, TagsDocument } from './db';
+import { log } from './main';
 
 export function getQueries(hashes: string[], tagsDB: Collection<Tags>) {
   const result = tagsDB.find({
@@ -15,20 +16,22 @@ export function getQueryResults(queryTags: Tags[], tagsDB: Collection<Tags>) {
     queryLineId: lineId,
     results: tagsDB.find({
       $and: [
-        {
-          //hashtag
-          $or: [
-            { hashtag: { $contains: includeTag } },
-            { inheritedTag: { $contains: includeTag } },
-          ],
-        },
+        // {
+        //hashtag
+        // $or: [
+        // { hashtag: { $containsAny: includeTag } },
+        { inheritedTags: { $contains: includeTag } },
+        // ],
+        // },
         {
           // includetag
           $and: [
             { hashtag: { $containsNone: excludeTag } },
-            { inheritedTag: { $containsNone: excludeTag } },
+            { inheritedTags: { $containsNone: excludeTag } },
           ],
         },
+        { hashtag: { $containsAny: includeTag } },
+        // { hashtag: { $size: { $gt: 0 } } },
       ],
     }),
   }));
