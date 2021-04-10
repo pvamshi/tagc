@@ -77,7 +77,7 @@ function shouldIgnore(
   lineIndex: number,
   linesDB: Collection<Line>
 ) {
-  if (lineIndex === 0) {
+  if (lineIndex === 0 || file.children.length === 0) {
     return false;
   }
   if (isAddOnly) {
@@ -319,6 +319,10 @@ function applyAddOrUpdateChanges(
   lines: Collection<Line>
 ): [ID[], ID] {
   const changeByType = keyBy(changes, 'type');
+  const oldLine =
+    file.children.length > 0 && file.children[lineNo]
+      ? getLine(file.children[lineNo], lines)
+      : undefined;
   const lineData = getLineType(changeByType['add'].content);
   const newLineItem: LineDocument | undefined = lines.insertOne({
     content: changeByType['add'].content,
@@ -328,6 +332,7 @@ function applyAddOrUpdateChanges(
     depth: lineData.depth,
     type: lineData.type,
     done: lineData.done,
+    queryResults: oldLine && oldLine.queryResults,
   });
   if (newLineItem === undefined) {
     throw new Error('failed to add line');

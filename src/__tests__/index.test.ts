@@ -239,12 +239,8 @@ ${queryResultBorderEnd}`);
   - line 2.1.2 #tag2
 - line 3
 
-+tag1
++tag1 +tag2
 ${queryResultBorderStart}
-- line 2 #tag1
-- line 2.1 #tag1
-  - line 2.1.1
-  - line 2.1.2 #tag2
 - line x #tag1 #tag2
 ${queryResultBorderEnd}`);
   });
