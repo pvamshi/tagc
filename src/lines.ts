@@ -143,6 +143,7 @@ export function updateTreeStructure(
       }
     } else if (current.depth > previous.depth) {
       parentStack.push(previous);
+      previous.children = [];
       addChild(previous, current, tagsDB);
       difference = current.depth - previous.depth;
     }
@@ -214,18 +215,17 @@ export function getQueryResultsLines(
     return {
       queryLineId,
       results: results
-        .map((result) =>
-          createReference(
+        .map((result) => {
+          return createReference(
             result.lineId,
             undefined,
             getLine(queryLineId, linesDB).fileId,
             linesDB
-          )
-        )
+          );
+        })
         .flatMap((reference) => getResultWithChildren(reference, linesDB)),
     };
   });
-  log({ output });
   return output;
 }
 

@@ -138,10 +138,7 @@ ${queryResultBorderEnd}`);
     // `;
     const fileChanges = runtest(
       'file1.md',
-      new Map([
-        [4, [{ type: 'add', content: '  - line 2.1.1' }]],
-        [5, [{ type: 'add', content: '  - line 2.1.1.1' }]],
-      ]),
+      new Map([[4, [{ type: 'add', content: '  - line 2.1.1' }]]]),
 
       filesDB,
       linesDB,
@@ -153,7 +150,6 @@ ${queryResultBorderEnd}`);
 - line 2 #tag1
 - line 2.1 #tag1
   - line 2.1.1
-  - line 2.1.1.1
 - line 3
 
 +tag1
@@ -161,7 +157,6 @@ ${queryResultBorderStart}
 - line 2 #tag1
 - line 2.1 #tag1
   - line 2.1.1
-  - line 2.1.1.1
 ${queryResultBorderEnd}`);
   });
 
@@ -200,6 +195,57 @@ ${queryResultBorderStart}
 - line 2.1 #tag1
   - line 2.1.1
   - line 2.1.2 #tag2
+${queryResultBorderEnd}`);
+  });
+  test('change query to add multiple tags', () => {
+    //`
+    // - line 1
+    // - line 2 #tag1
+    // - line 2.1 #tag1
+    // - line 2.1 #tag1
+    //   - line 2.1.1
+    //   - line 2.1.2 #tag2
+    // - line 3
+    //
+    // +tag1
+    // `;
+    const fileChanges = runtest(
+      'file1.md',
+      new Map([
+        [1, [{ type: 'add', content: '- line x #tag1 #tag2' }]],
+        [
+          9,
+          [
+            { type: 'del', content: '' },
+            { type: 'add', content: '+tag1 +tag2' },
+          ],
+        ],
+      ]),
+      filesDB,
+      linesDB,
+      tagsDB
+    );
+
+    console.log(fileChanges[0].text);
+
+    expect(fileChanges.length).toBe(1);
+    // console.log(fileChanges[0].text);
+    expect(fileChanges[0].text).toBe(`
+- line x #tag1 #tag2
+- line 1
+- line 2 #tag1
+- line 2.1 #tag1
+  - line 2.1.1
+  - line 2.1.2 #tag2
+- line 3
+
++tag1
+${queryResultBorderStart}
+- line 2 #tag1
+- line 2.1 #tag1
+  - line 2.1.1
+  - line 2.1.2 #tag2
+- line x #tag1 #tag2
 ${queryResultBorderEnd}`);
   });
 });

@@ -37,7 +37,6 @@ export function getFilesToUpdate(
   ];
   deleteLines(deletedLines, lines, tags);
   const queryTags = getQueries(updatedTags, tags);
-  log({ queryTags });
   // write tests for tags ??
   const queryResults = getQueryResults(queryTags, tags);
   const queryResultsLines = getQueryResultsLines(queryResults, lines);
