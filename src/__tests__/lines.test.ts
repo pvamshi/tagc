@@ -9,7 +9,7 @@ import Loki from 'lokijs';
 import _ from 'lodash';
 import { getQueryResults } from '../query';
 // describe('lines', () => {
-describe('updateLines', () => {
+describe('lines', () => {
   let lines: Collection<Line>;
   let files: Collection<File>;
   let tags: Collection<Tags>;
@@ -236,71 +236,71 @@ describe('updateLines', () => {
     ).toEqual([0, 2, 0, 2, 0, 1, 1, 0]);
   });
 
-  it('getQueryResultsLines should give proper results', () => {
-    const fileText = `- line
-  - line 2
-    - line 3
-    - line 4
-      - line 5
-      - line 6
-        - line 7
-      - line 8
-      - line 9
-    - line 10
-      - line 11
-  `;
-    const changes = new Map(
-      fileText
-        .split('\n')
-        .map((content) => [{ type: 'add', content } as Change])
-        .entries()
-    );
-    const { addedLines, deletedLines, fileId } = updateLines(
-      changes,
-      'file-get-query-results-test.md',
-      lines,
-      files,
-      tags
-    );
-    updateTreeStructure(fileId, lines, files, tags);
-    const results = getQueryResultsLines(
-      [
-        {
-          queryLineId: addedLines[0],
-          results: [
-            {
-              lineId: addedLines[1],
-              hashtag: [],
-              excludeTag: [],
-              includeTag: [],
-              inheritedTags: [],
-            },
-          ],
-        },
-      ],
-      lines
-    );
+  // xit('getQueryResultsLines should give proper results', () => {
+  //   const fileText = `- line
+  // - line 2
+  //   - line 3
+  //   - line 4
+  //     - line 5
+  //     - line 6
+  //       - line 7
+  //     - line 8
+  //     - line 9
+  //   - line 10
+  //     - line 11
+  // `;
+  //   const changes = new Map(
+  //     fileText
+  //       .split('\n')
+  //       .map((content) => [{ type: 'add', content } as Change])
+  //       .entries()
+  //   );
+  //   const { addedLines, deletedLines, fileId } = updateLines(
+  //     changes,
+  //     'file-get-query-results-test.md',
+  //     lines,
+  //     files,
+  //     tags
+  //   );
+  //   updateTreeStructure(fileId, lines, files, tags);
+  //   const results = getQueryResultsLines(
+  //     [
+  //       {
+  //         queryLineId: addedLines[0],
+  //         results: [
+  //           {
+  //             lineId: addedLines[1],
+  //             hashtag: [],
+  //             excludeTag: [],
+  //             includeTag: [],
+  //             inheritedTags: [],
+  //           },
+  //         ],
+  //       },
+  //     ],
+  //     lines
+  //   );
 
-    expect(results).toBeTruthy();
-    expect(
-      results
-        .flatMap((r) => r.results)
-        .map((r) => r.content)
-        .join('\n')
-    ).toBe(`  - line 2
-    - line 3
-    - line 4
-      - line 5
-      - line 6
-        - line 7
-      - line 8
-      - line 9
-    - line 10
-      - line 11`);
-    expect(
-      results.flatMap((r) => r.results).map((r) => r.referenceLineId)
-    ).toEqual(addedLines.slice(1, 11)); // references are correct
-  });
+  //   expect(results).toBeTruthy();
+  //   expect(
+  //     results
+  //       .flatMap((r) => r.results)
+  //       .map((r) => r.content)
+  //       .join('\n')
+  //   ).toBe(`  - line 2
+  //   - line 3
+  //   - line 4
+  //     - line 5
+  //     - line 6
+  //       - line 7
+  //     - line 8
+  //     - line 9
+  //   - line 10
+  //     - line 11`);
+  //   expect(
+  //     results.flatMap((r) => r.results).map((r) => r.referenceLineId)
+  //   ).toEqual(addedLines.slice(1, 11)); // references are correct
+  // });
 });
 
 export function prepareDB(): Promise<{

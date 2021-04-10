@@ -223,7 +223,9 @@ export function getQueryResultsLines(
             linesDB
           );
         })
-        .flatMap((reference) => getResultWithChildren(reference, linesDB)),
+        .flatMap((reference) =>
+          getResultWithChildren(reference, linesDB, true)
+        ),
     };
   });
   return output;
@@ -246,12 +248,30 @@ export function getFileText(
 
 function getResultWithChildren(
   line: LineDocument,
-  linesDB: Collection<Line>
+  linesDB: Collection<Line>,
+  addEmptyLine = false
 ): LineDocument[] {
   const children = line.children.flatMap((childId) =>
     getResultWithChildren(getLine(childId, linesDB), linesDB)
   );
-  return [line, ...children];
+
+  return addEmptyLine
+    ? [
+        line,
+        ...children,
+        addLine(
+          {
+            type: 'BOUNDARY',
+            content: '',
+            fileId: line.fileId,
+            depth: 0,
+            parentId: line.$loki,
+            children: [],
+          },
+          linesDB
+        ),
+      ]
+    : [line, ...children];
 }
 
 function createReference(

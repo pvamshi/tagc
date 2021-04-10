@@ -11,15 +11,15 @@ import {
 /** 
  * 
  Test cases : 
- - query should fetch child tags should too
+ - [ ] query should fetch child tags should too
   parent line #tag1 
     child line #tag2
   +tag1 +tag2
- - adding just below query response is valid
- - tree structure should also ignore query responses
- - making changes in query responses should be ignored
- - query line updated should update the references 
- - query line deleted should delete the responses too
+ - [ ] adding just below query response is valid
+ - [ ] tree structure should also ignore query responses
+ - [ ] making changes in query responses should be ignored
+ - [ ] query line updated should update the references 
+ - [ ] query line deleted should delete the responses too
  - 
  */
 describe('main tests', () => {
@@ -95,6 +95,7 @@ describe('main tests', () => {
 +tag1
 ${queryResultBorderStart}
 - line 2 #tag1
+
 ${queryResultBorderEnd}`);
   });
   test('add a tag to existing query and get file update', () => {
@@ -123,7 +124,9 @@ ${queryResultBorderEnd}`);
 +tag1
 ${queryResultBorderStart}
 - line 2 #tag1
+
 - line 2.1 #tag1
+
 ${queryResultBorderEnd}`);
   });
   test('add a child to existing tag and existing query and get file update', () => {
@@ -155,8 +158,10 @@ ${queryResultBorderEnd}`);
 +tag1
 ${queryResultBorderStart}
 - line 2 #tag1
+
 - line 2.1 #tag1
   - line 2.1.1
+
 ${queryResultBorderEnd}`);
   });
 
@@ -192,9 +197,11 @@ ${queryResultBorderEnd}`);
 +tag1
 ${queryResultBorderStart}
 - line 2 #tag1
+
 - line 2.1 #tag1
   - line 2.1.1
   - line 2.1.2 #tag2
+
 ${queryResultBorderEnd}`);
   });
   test('change query to add multiple tags', () => {
@@ -239,7 +246,9 @@ ${queryResultBorderEnd}`);
 +tag1 +tag2
 ${queryResultBorderStart}
   - line 2.1.2 #tag2
+
 - line x #tag1 #tag2
+
 ${queryResultBorderEnd}`);
   });
 });
@@ -251,11 +260,6 @@ function runtest(
   linesDB: Collection<Line>,
   tagsDB: Collection<Tags>
 ) {
-  // changes: Map<number, Change[]>,
-  // filePath: string,
-  // lines: Collection<Line>,
-  // files: Collection<File>,
-  // tags: Collection<Tags>
   return getFilesToUpdate(changes, filePath, linesDB, filesDB, tagsDB);
 }
 

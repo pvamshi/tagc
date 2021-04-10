@@ -16,27 +16,15 @@ export function getQueryResults(queryTags: Tags[], tagsDB: Collection<Tags>) {
     queryLineId: lineId,
     results: tagsDB.find({
       $and: [
-        // {
-        //hashtag
-        // $or: [
-        // { hashtag: { $containsAny: includeTag } },
         { inheritedTags: { $contains: includeTag } },
-        // ],
-        // },
         {
-          // includetag
           $and: [
             { hashtag: { $containsNone: excludeTag } },
             { inheritedTags: { $containsNone: excludeTag } },
           ],
         },
         { hashtag: { $containsAny: includeTag } },
-        // { hashtag: { $size: { $gt: 0 } } },
       ],
     }),
   }));
 }
-
-// if includes in hashtag or include tags
-// and
-//  not include in hashtag and iclude ag
