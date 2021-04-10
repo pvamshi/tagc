@@ -62,13 +62,10 @@ export function getTagsFromDeleteLines(
   linesDB: Collection<Line>,
   tagsDB: Collection<Tags>
 ): string[] {
-  const tags = deletedLines
+  return deletedLines
     .map((lineId) => getLine(lineId, linesDB))
-    .filter((line) => line.type === 'BOUNDARY' || line.referenceLineId)
-    .map((line) => tagsDB.findOne({ lineId: line.$loki }));
-
-  log({ tags });
-  return tags
+    .filter((line) => line.type !== 'BOUNDARY' || !line.referenceLineId)
+    .map((line) => tagsDB.findOne({ lineId: line.$loki }))
     .filter((tag) => tag && tag.inheritedTags.length !== 0)
     .flatMap((tag) => tag?.inheritedTags) as string[];
 }

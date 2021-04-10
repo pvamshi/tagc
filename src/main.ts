@@ -28,7 +28,6 @@ export function getFilesToUpdate(
   );
   const addedTags = addTagsToChanges(addedLines, lines, tags);
   updateTreeStructure(fileId, lines, files, tags);
-  log(getTagsFromDeleteLines(deletedLines, lines, tags));
   const updatedTags = [
     ...new Set([
       ...addedTags.flatMap((tag) =>

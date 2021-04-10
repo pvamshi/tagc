@@ -137,6 +137,7 @@ export function updateTreeStructure(
         addChild(currentParent, current, tagsDB);
       }
     } else if (current.depth == previous.depth) {
+      current.children = [];
       const currentParent = last(parentStack);
       if (currentParent) {
         addChild(currentParent, current, tagsDB);

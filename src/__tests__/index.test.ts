@@ -280,6 +280,44 @@ ${queryResultBorderEnd}`);
 - line 3
 dummy text`);
   });
+
+  test.only('simple child tag with parent having hash should reflect in query response', () => {
+    const changes1 = newFileChanges(
+      `- line 1
+- line 2 #tag
+  - line 33
+  - line 34
+  - line 35
+  - line 36
+  
++tag`
+    );
+    runtest('fil2.md', changes1, filesDB, linesDB, tagsDB);
+    const fileChanges = runtest(
+      'fil2.md',
+      new Map([[5, [{ type: 'del', content: 'sdsd' }]]]),
+      filesDB,
+      linesDB,
+      tagsDB
+    );
+
+    expect(fileChanges[0].text).toEqual(
+      `- line 1
+- line 2 #tag
+  - line 33
+  - line 34
+  - line 35
+  
++tag
+${queryResultBorderStart}
+- line 2 #tag
+  - line 33
+  - line 34
+  - line 35
+
+${queryResultBorderEnd}`
+    );
+  });
 });
 
 function runtest(
