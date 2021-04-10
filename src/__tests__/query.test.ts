@@ -1,5 +1,4 @@
 import { Tags } from '../db';
-import { log } from '../main';
 import { getQueries, getQueryResults } from '../query';
 import { prepareDB } from './lines.test';
 

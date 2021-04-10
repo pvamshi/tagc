@@ -1,4 +1,4 @@
-import { getFilesToUpdate } from '../main';
+import { getFilesToUpdate, log } from '../main';
 import { Change } from '../commit-changes/models';
 import { Tags, File, Line } from '../db';
 import { prepareDB } from './lines.test';
@@ -7,11 +7,12 @@ import {
   queryResultBorderStart,
   queryResultBorderEnd,
 } from '../config.json';
+import { getFileText } from '../lines';
 
 /** 
  * 
  Test cases : 
- - [ ] query should fetch child tags should too
+ - [x] query should fetch child tags should too
   parent line #tag1 
     child line #tag2
   +tag1 +tag2
@@ -72,13 +73,6 @@ describe('main tests', () => {
     expect(fileChanges.length).toBe(0);
   });
   test('add a query and get file update', () => {
-    //`
-    // - line 1
-    // - line 2 #tag1
-    // - line 3
-    //
-    // +tag1
-    // `;
     const fileChanges = runtest(
       'file1.md',
       new Map([[5, [{ type: 'add', content: '+tag1' }]]]),
@@ -130,15 +124,6 @@ ${queryResultBorderStart}
 ${queryResultBorderEnd}`);
   });
   test('add a child to existing tag and existing query and get file update', () => {
-    //`
-    // - line 1
-    // - line 2 #tag1
-    // - line 2.1 #tag1
-    //   - line 2.1.1
-    // - line 3
-    //
-    // +tag1
-    // `;
     const fileChanges = runtest(
       'file1.md',
       new Map([[4, [{ type: 'add', content: '  - line 2.1.1' }]]]),
@@ -166,17 +151,6 @@ ${queryResultBorderEnd}`);
   });
 
   test('add a child to existing tag  with another tag and existing query ', () => {
-    //`
-    // - line 1
-    // - line 2 #tag1
-    // - line 2.1 #tag1
-    // - line 2.1 #tag1
-    //   - line 2.1.1
-    //   - line 2.1.2 #tag2
-    // - line 3
-    //
-    // +tag1
-    // `;
     const fileChanges = runtest(
       'file1.md',
       new Map([[5, [{ type: 'add', content: '  - line 2.1.2 #tag2' }]]]),
@@ -221,6 +195,13 @@ ${queryResultBorderEnd}`);
       new Map([
         [1, [{ type: 'add', content: '- line x #tag1 #tag2' }]],
         [
+          8,
+          [
+            { type: 'del', content: '' },
+            { type: 'add', content: 'dummy text' },
+          ],
+        ],
+        [
           9,
           [
             { type: 'del', content: '' },
@@ -242,7 +223,7 @@ ${queryResultBorderEnd}`);
   - line 2.1.1
   - line 2.1.2 #tag2
 - line 3
-
+dummy text
 +tag1 +tag2
 ${queryResultBorderStart}
   - line 2.1.2 #tag2
@@ -250,6 +231,27 @@ ${queryResultBorderStart}
 - line x #tag1 #tag2
 
 ${queryResultBorderEnd}`);
+  });
+  test('deleting query should delete results too', () => {
+    const fileChanges = runtest(
+      'file1.md',
+      new Map([[9, [{ type: 'del', content: '- line x #tag1 #tag2' }]]]),
+      filesDB,
+      linesDB,
+      tagsDB
+    );
+
+    expect(fileChanges.length).toBe(1);
+
+    expect(fileChanges[0].text).toEqual(`
+- line x #tag1 #tag2
+- line 1
+- line 2 #tag1
+- line 2.1 #tag1
+  - line 2.1.1
+  - line 2.1.2 #tag2
+- line 3
+dummy text`);
   });
 });
 

@@ -9,7 +9,7 @@ import {
   updateTreeStructure,
 } from './lines';
 import { getQueries, getQueryResults } from './query';
-import { addTagsToChanges, tagsInLines } from './tags';
+import { addTagsToChanges, getTagsFromDeleteLines, tagsInLines } from './tags';
 export function getFilesToUpdate(
   changes: Map<number, Change[]>,
   filePath: string,
@@ -17,6 +17,7 @@ export function getFilesToUpdate(
   files: Collection<File>,
   tags: Collection<Tags>
 ) {
+  let filesToUpdate = [];
   // save changes in db
   const { addedLines, deletedLines, fileId } = updateLines(
     changes,
@@ -32,15 +33,24 @@ export function getFilesToUpdate(
       ...addedTags.flatMap((tag) =>
         [tag.hashtag, tag.includeTag, tag.excludeTag, tag.inheritedTags].flat()
       ),
-      ...tagsInLines(deletedLines, tags),
+      ...getTagsFromDeleteLines(deletedLines, lines, tags),
     ]),
   ];
+
   deleteLines(deletedLines, lines, tags);
+  if (deletedLines.length > 1) {
+    // may be query is deleted ?
+    filesToUpdate.push(fileId);
+  }
   const queryTags = getQueries(updatedTags, tags);
   // write tests for tags ??
   const queryResults = getQueryResults(queryTags, tags);
   const queryResultsLines = getQueryResultsLines(queryResults, lines);
-  const filesToUpdate = updateQueryResults(queryResultsLines, lines, files);
+  filesToUpdate = [
+    ...new Set(
+      filesToUpdate.concat(updateQueryResults(queryResultsLines, lines, files))
+    ),
+  ];
   return filesToUpdate.map((fileId) => getFileText(fileId, lines, files));
 }
 

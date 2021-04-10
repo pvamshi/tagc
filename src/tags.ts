@@ -1,6 +1,5 @@
 import { mergeWith, pipe, reduce } from 'lodash/fp';
 import nearley from 'nearley';
-import { parse } from 'node:path';
 import { getLine, ID, Line, Tags, TagsDocument } from './db';
 import hashtag from './lib/hashtags';
 
@@ -55,5 +54,17 @@ export function isQuery(lineId: ID, tagsDB: Collection<Tags>) {
   if (!tags) {
     return false;
   }
-  return tags.excludeTag.length === 0 && tags.includeTag.length === 0;
+  return !(tags.excludeTag.length === 0 && tags.includeTag.length === 0);
+}
+export function getTagsFromDeleteLines(
+  deletedLines: ID[],
+  linesDB: Collection<Line>,
+  tagsDB: Collection<Tags>
+): string[] {
+  return deletedLines
+    .map((lineId) => getLine(lineId, linesDB))
+    .filter((line) => line.type === 'BOUNDARY' || line.referenceLineId)
+    .map((line) => tagsDB.findOne({ lineId: line.$loki }))
+    .filter((tag) => tag && tag.inheritedTags.length !== 0)
+    .flatMap((tag) => tag?.inheritedTags) as string[];
 }

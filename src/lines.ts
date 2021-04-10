@@ -60,7 +60,7 @@ export function updateLines(
       addedLines.push(addLines);
     } else {
       const linesToDelete = isQuery(file.children[lineNo], tags)
-        ? getLine(file.children[lineNo], lines).queryResults
+        ? (getLine(file.children[lineNo], lines).queryResults || 0) + 1 //results + query
         : 1;
 
       deletedLines = deletedLines.concat(
