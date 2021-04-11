@@ -12,10 +12,14 @@ async function start() {
       //- get file changes
       const changes = await getFileChanges(filePath);
       const filesText = getFilesToUpdate(changes, filePath, lines, files, tags);
-      const responses = await Promise.all(
-        filesText.map((fileText) => writeText(fileText.filePath, fileText.text))
-      );
-      console.log(responses);
+      if (filesText) {
+        const responses = await Promise.all(
+          filesText.map((fileText) =>
+            writeText(fileText.filePath, fileText.text)
+          )
+        );
+        console.log(responses);
+      }
 
       /**
  yet to do 
