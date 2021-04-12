@@ -5,12 +5,12 @@ import { getDB, initDB, DB } from './db';
 import { writeText } from './fileio';
 import { getFilesToUpdate } from './main';
 
-import { diffTrimmedLines } from 'diff';
 async function start() {
   try {
     const { files, lines, tags } = await initDB();
     const db: DB = getDB(files, lines);
     chokidar.watch(projects).on('change', async (filePath: string) => {
+      console.time('start exec');
       //- get file changes
       const changes = await getFileChanges(filePath, db);
       const filesText = getFilesToUpdate(
@@ -29,15 +29,7 @@ async function start() {
         );
         console.log(responses);
       }
-
-      /**
- yet to do 
- - two-way sync --> take effort to update them manually
- - plugin system ?  --> we can add them slowly
- - text inbetween lists --> use lists everywhere for now
- - block for paragraphs ---> use lists everywhere for now
- - adding negative search wont work on child lists --> Fix this ! 
- */
+      console.timeEnd('start exec');
     });
   } catch (err) {
     console.error(err);

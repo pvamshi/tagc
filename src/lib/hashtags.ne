@@ -1,6 +1,6 @@
 @preprocessor typescript
 
-Hashtag -> [\s\S]:* " " Tag  [\S]:+ Tail {% d=>({ type: d[2],value: d[3].join('') }) %}
+Hashtag -> ([\s\S]:* " "):* Tag  [\S]:+ Tail {% d=>({ type: d[1],value: d[2].join('') }) %}
 Tag -> "#" {% d=> "hashtag" %}
   | "+"  {% d=> "includeTag" %}
   | "-" {% d=> "excludeTag" %}

@@ -41,7 +41,9 @@ function parseTags(lineId: ID, lines: Collection<Line>): Tags {
   const res: Tags = pipe(
     reduce(
       (acc, { type, value }) =>
-        mergeWith((a, b) => a.concat(b), acc, { [type]: [value] }),
+        mergeWith((a, b) => a.concat(b), acc, {
+          [type]: [...new Set([value])],
+        }),
       { lineId, includeTag: [], excludeTag: [], hashtag: [], inheritedTags: [] }
     )
   )(tagsParser.results);
