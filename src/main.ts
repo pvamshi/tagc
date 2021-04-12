@@ -1,5 +1,5 @@
-import { Change } from './commit-changes/models';
-import { File, Line, Tags } from './db';
+import { Change, ChangeOld } from './commit-changes/models';
+import { DB, File, Line, Tags } from './db';
 import {
   deleteLines,
   getFileText,
@@ -15,7 +15,8 @@ export function getFilesToUpdate(
   filePath: string,
   lines: Collection<Line>,
   files: Collection<File>,
-  tags: Collection<Tags>
+  tags: Collection<Tags>,
+  db: DB
 ) {
   try {
     let filesToUpdate = [];
@@ -25,7 +26,8 @@ export function getFilesToUpdate(
       filePath,
       lines,
       files,
-      tags
+      tags,
+      db
     );
     const addedTags = addTagsToChanges(addedLines, lines, tags);
     updateTreeStructure(fileId, lines, files, tags);
@@ -61,7 +63,7 @@ export function getFilesToUpdate(
     ];
     return filesToUpdate.map((fileId) => getFileText(fileId, lines, files));
   } catch (error) {
-    console.error('Error somewhere catching it all');
+    console.error('Error somewhere catching it all', error);
   }
 }
 

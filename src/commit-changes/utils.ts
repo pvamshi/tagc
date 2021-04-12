@@ -1,10 +1,10 @@
 import { exec } from 'child_process';
 import { curry } from 'lodash/fp';
 import { promisify } from 'util';
-import { Change, ChangeType } from './models';
+import { ChangeOld, ChangeType } from './models';
 
 export const toChange = curry(
-  (type: ChangeType, content: string): Change => ({ type, content })
+  (type: ChangeType, content: string): ChangeOld => ({ type, content })
 );
 
 export const asyncExec = promisify(exec);

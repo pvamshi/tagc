@@ -1,17 +1,17 @@
 import { keyBy } from 'lodash';
-import { last, prop } from 'lodash/fp';
+import { last } from 'lodash/fp';
 import nearley from 'nearley';
-import { log } from './main';
-import { Change } from './commit-changes/models';
+import { AddChange, Change } from './commit-changes/models';
 import {
   lineSeperator,
-  softTabSize,
-  queryResultBorderStart,
   queryResultBorderEnd,
+  queryResultBorderStart,
+  softTabSize,
 } from './config.json';
 import {
   addLine,
   createOrGetFile,
+  DB,
   deleteLine,
   File,
   FileDocument,
@@ -32,7 +32,8 @@ export function updateLines(
   filePath: string,
   lines: Collection<Line>,
   files: Collection<File>,
-  tags: Collection<Tags>
+  tags: Collection<Tags>,
+  db: DB
 ): { addedLines: ID[]; deletedLines: ID[]; fileId: ID } {
   const file = createOrGetFile(filePath, files);
   // make changes for each line
@@ -54,10 +55,10 @@ export function updateLines(
         lineNo,
         changes,
         file,
-        lines
+        db
       );
       deletedLines = deletedLines.concat(delLines);
-      addedLines.push(addLines);
+      addedLines = addedLines.concat(addLines);
     } else {
       const linesToDelete = isQuery(file.children[lineNo], tags)
         ? (getLine(file.children[lineNo], lines).queryResults || 0) + 1 //results + query
@@ -182,31 +183,33 @@ function addBorders(
   fileId: ID,
   linesDB: Collection<Line>
 ) {
-  return [
-    addLine(
-      {
-        type: 'BOUNDARY',
-        content: queryResultBorderStart,
-        fileId,
-        parentId: undefined,
-        children: [],
-        depth: 0,
-      },
-      linesDB
-    ),
-    ...results,
-    addLine(
-      {
-        type: 'BOUNDARY',
-        content: queryResultBorderEnd,
-        fileId,
-        parentId: undefined,
-        children: [],
-        depth: 0,
-      },
-      linesDB
-    ),
-  ];
+  return results.length > 0
+    ? [
+        addLine(
+          {
+            type: 'BOUNDARY',
+            content: queryResultBorderStart,
+            fileId,
+            parentId: undefined,
+            children: [],
+            depth: 0,
+          },
+          linesDB
+        ),
+        ...results,
+        addLine(
+          {
+            type: 'BOUNDARY',
+            content: queryResultBorderEnd,
+            fileId,
+            parentId: undefined,
+            children: [],
+            depth: 0,
+          },
+          linesDB
+        ),
+      ]
+    : results;
 }
 export function getQueryResultsLines(
   queryResults: { queryLineId: ID; results: Tags[] }[],
@@ -337,34 +340,34 @@ function applyAddOrUpdateChanges(
   lineNo: number,
   changes: Change[],
   file: FileDocument,
-  lines: Collection<Line>
-): [ID[], ID] {
+  db: DB
+): [ID[], ID[]] {
   const changeByType = keyBy(changes, 'type');
   const oldLine =
     file.children.length > 0 && file.children[lineNo]
-      ? getLine(file.children[lineNo], lines)
+      ? db.getLine(file.children[lineNo])
       : undefined;
-  const lineData = getLineType(changeByType['add'].content);
-  const newLineItem: LineDocument | undefined = lines.insertOne({
-    content: changeByType['add'].content,
-    children: [],
-    parentId: undefined,
-    fileId: file.$loki,
-    depth: lineData.depth,
-    type: lineData.type,
-    done: lineData.done,
-    queryResults: oldLine && oldLine.queryResults,
+  const addedLines: LineDocument[] = [];
+  const changeContents = (changeByType['add'] as AddChange).content;
+  changeContents.forEach((content) => {
+    const lineData = getLineType(content);
+    addedLines.push(
+      db.addLine({
+        content: content,
+        children: [],
+        parentId: undefined,
+        fileId: file.$loki,
+        depth: lineData.depth,
+        type: lineData.type,
+        done: lineData.done,
+        queryResults: oldLine && oldLine.queryResults,
+      })
+    );
   });
-  if (newLineItem === undefined) {
-    throw new Error('failed to add line');
-  }
+  const addedLineIds = addedLines.map((line) => line.$loki);
   return [
-    file.children.splice(
-      lineNo,
-      changeByType['del'] ? 1 : 0,
-      newLineItem.$loki
-    ),
-    newLineItem.$loki,
+    file.children.splice(lineNo, changeByType['del'] ? 1 : 0, ...addedLineIds),
+    addedLineIds,
   ];
 }
 

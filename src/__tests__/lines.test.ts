@@ -1,10 +1,6 @@
-import { Change } from '../commit-changes/models';
-import { Line, Tags, File } from '../db';
-import {
-  getQueryResultsLines,
-  updateLines,
-  updateTreeStructure,
-} from '../lines';
+import { AddChange, Change, DeleteChange } from '../commit-changes/models';
+import { Line, Tags, File, getDB, DB } from '../db';
+import { updateLines, updateTreeStructure } from '../lines';
 import Loki from 'lokijs';
 import _ from 'lodash';
 import { getQueryResults } from '../query';
@@ -13,21 +9,33 @@ describe('lines', () => {
   let lines: Collection<Line>;
   let files: Collection<File>;
   let tags: Collection<Tags>;
+  let db: DB;
   beforeAll(async () => {
-    const db = await prepareDB();
-    lines = db.lines;
-    files = db.files;
-    tags = db.tags;
+    const db1 = await prepareDB();
+    db = getDB(db1.files, db1.lines);
+    lines = db1.lines;
+    files = db1.files;
+    tags = db1.tags;
   });
   it('should add lines', async () => {
     const changes = new Map([
-      [0, [{ type: 'add', content: 'line 1' } as Change]],
-      [1, [{ type: 'add', content: '- line 2' } as Change]],
-      [2, [{ type: 'add', content: '  - line 3' } as Change]],
-      [3, [{ type: 'add', content: '  - [ ] line 4' } as Change]],
-      [4, [{ type: 'add', content: '  - [x] line 5' } as Change]],
+      [
+        0,
+        [
+          {
+            type: 'add',
+            content: [
+              'line 1',
+              '- line 2',
+              '  - line 3',
+              '  - [ ] line 4',
+              '  - [x] line 5',
+            ],
+          } as Change,
+        ],
+      ],
     ]);
-    const newLines = updateLines(changes, 'file1.md', lines, files, tags);
+    const newLines = updateLines(changes, 'file1.md', lines, files, tags, db);
     expect(newLines.addedLines.length).toBe(5);
     expect(files.count()).toBe(1);
     expect(lines.count()).toBe(5);
@@ -61,12 +69,12 @@ describe('lines', () => {
     const fileResults = files.find({ filePath: 'file1.md' });
     expect(fileResults.length).toBe(1);
     const changes = new Map([
-      [5, [{ type: 'add', content: '- line 6' } as Change]],
+      [5, [{ type: 'add', content: ['- line 6'] } as Change]],
       [
         1,
         [
-          { type: 'add', content: '- line 2a' } as Change,
-          { type: 'del', content: '- line 2' } as Change,
+          { type: 'add', content: ['- line 2a'] } as Change,
+          { type: 'del' } as Change,
         ],
       ],
     ]);
@@ -75,7 +83,8 @@ describe('lines', () => {
       'file1.md',
       lines,
       files,
-      tags
+      tags,
+      db
     );
     expect(files.count()).toBe(1);
     expect(lines.count()).toBe(7);
@@ -96,15 +105,14 @@ describe('lines', () => {
   it('should delete lines', async () => {
     const fileResults = files.find({ filePath: 'file1.md' });
     expect(fileResults.length).toBe(1);
-    const changes = new Map([
-      [1, [{ type: 'del', content: '- line 6' } as Change]],
-    ]);
+    const changes = new Map([[1, [{ type: 'del' } as DeleteChange]]]);
     const { addedLines, deletedLines } = updateLines(
       changes,
       'file1.md',
       lines,
       files,
-      tags
+      tags,
+      db
     );
     expect(files.count()).toBe(1);
     expect(lines.count()).toBe(7); // not 6 becauese we have one deleted line from previous test
@@ -152,7 +160,7 @@ describe('lines', () => {
 - line 3`;
     const changes = lineText
       .split('\n')
-      .map((line) => [{ type: 'add', content: line } as Change])
+      .map((line) => [{ type: 'add', content: [line] } as AddChange])
       .entries();
     const filePath = 'file2.md';
     const { fileId } = updateLines(
@@ -160,7 +168,8 @@ describe('lines', () => {
       filePath,
       lines,
       files,
-      tags
+      tags,
+      db
     );
     updateTreeStructure(fileId, lines, files, tags);
     const fileResult = files.findOne({ filePath });
@@ -183,7 +192,7 @@ describe('lines', () => {
 
     const changes = lineText
       .split('\n')
-      .map((line) => [{ type: 'add', content: line } as Change])
+      .map((line) => [{ type: 'add', content: [line] } as Change])
       .entries();
     const filePath = 'file3.md';
     const { fileId } = updateLines(
@@ -191,7 +200,8 @@ describe('lines', () => {
       filePath,
       lines,
       files,
-      tags
+      tags,
+      db
     );
     updateTreeStructure(fileId, lines, files, tags);
     const fileResult = files.findOne({ filePath });
@@ -215,7 +225,7 @@ describe('lines', () => {
 
     const changes = lineText
       .split('\n')
-      .map((line) => [{ type: 'add', content: line } as Change])
+      .map((line) => [{ type: 'add', content: [line] } as Change])
       .entries();
     const filePath = 'file4.md';
     const { fileId } = updateLines(
@@ -223,7 +233,8 @@ describe('lines', () => {
       filePath,
       lines,
       files,
-      tags
+      tags,
+      db
     );
     updateTreeStructure(fileId, lines, files, tags);
     const fileResult = files.findOne({ filePath });

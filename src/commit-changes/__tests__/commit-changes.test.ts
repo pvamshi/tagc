@@ -1,31 +1,86 @@
-import { asyncExec } from '../utils';
-import { commitFile, getFileChanges } from '..';
+import { getChanges } from '..';
+import { lineSeperator } from '../../config.json';
 jest.mock('../utils');
-xdescribe('commit-changes', () => {
-  it('should give empty array if there are no changes', async () => {
-    (asyncExec as jest.Mock).mockResolvedValue({
-      stderr: `
-file is unchanged; `,
-    });
-    const changes = await getFileChanges('random file');
-    expect(changes).toEqual(new Map());
+
+const s = (str: TemplateStringsArray) => str[0].split('\n');
+
+describe.only('commit-changes', () => {
+  test('empty map when no changes', () => {
+    const changes = getChanges(s`text1\ntext2\ntext3`, s`text1\ntext2\ntext3`);
+    expect(changes.size).toBe(0);
   });
-  it('should give all lines if its a new file', async () => {
-    (asyncExec as jest.Mock)
-      .mockResolvedValue({
-        stderr: `
-initial revision: 1.1; `,
-      })
-      .mockResolvedValue({
-        stdout: `line 1
-line 2`,
-      });
-    const changes = await getFileChanges('random file');
-    expect(changes).toEqual(
-      new Map([
-        [0, { type: 'add', content: 'line 1' }],
-        [1, { type: 'add', content: 'line 2' }],
-      ])
+
+  test('add at the beginning ', () => {
+    const changes = getChanges(
+      s`text1\ntext2\ntext3`,
+      s`textnew\ntext1\ntext2\ntext3`
     );
+    expect(changes.size).toBe(1);
+    expect(changes.get(0)).toEqual([{ type: 'add', content: ['textnew'] }]);
+  });
+  test('delete at the beginning ', () => {
+    const changes = getChanges(s`text1\ntext2\ntext3`, s`text2\ntext3`);
+    expect(changes.size).toBe(1);
+    expect(changes.get(0)).toEqual([{ type: 'del' }]);
+  });
+  test('update at the beginning ', () => {
+    const changes = getChanges(
+      s`text1\ntext2\ntext3`,
+      s`textnew\ntext2\ntext3`
+    );
+    expect(changes.size).toBe(1);
+    expect(changes.get(0)).toEqual([
+      { type: 'del' },
+      { type: 'add', content: ['textnew'] },
+    ]);
+  });
+  test('add at the end ', () => {
+    const changes = getChanges(
+      s`text1\ntext2\ntext3\n`,
+      s`text1\ntext2\ntext3\ntextnew\n`
+    );
+    expect(changes.size).toBe(1);
+    expect(changes.get(3)).toEqual([{ type: 'add', content: ['textnew'] }]);
+  });
+  test('delete at the end ', () => {
+    const changes = getChanges(s`text1\ntext2\ntext3\n`, s`text1\ntext2\n`);
+    expect(changes.size).toBe(1);
+    expect(changes.get(2)).toEqual([{ type: 'del' }]);
+  });
+  test('update at the end ', () => {
+    const changes = getChanges(
+      s`text1\ntext2\ntext3\n`,
+      s`text1\ntext2\ntextnew\n`
+    );
+    expect(changes.size).toBe(1);
+    expect(changes.get(2)).toEqual([
+      { type: 'del' },
+      { type: 'add', content: ['textnew'] },
+    ]);
+  });
+
+  test('add in the middle ', () => {
+    const changes = getChanges(
+      s`text1\ntext2\ntext3\n`,
+      s`text1\ntext2\ntextnew\ntext3\n`
+    );
+    expect(changes.size).toBe(1);
+    expect(changes.get(2)).toEqual([{ type: 'add', content: ['textnew'] }]);
+  });
+  test('del in the middle ', () => {
+    const changes = getChanges(s`text1\ntext2\ntext3\n`, s`text1\ntext3\n`);
+    expect(changes.size).toBe(1);
+    expect(changes.get(1)).toEqual([{ type: 'del' }]);
+  });
+  test('update in the middle ', () => {
+    const changes = getChanges(
+      s`text1\ntext2\ntext3\n`,
+      s`text1\ntextnew\ntext3\n`
+    );
+    expect(changes.size).toBe(1);
+    expect(changes.get(1)).toEqual([
+      { type: 'del' },
+      { type: 'add', content: ['textnew'] },
+    ]);
   });
 });

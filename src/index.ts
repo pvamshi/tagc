@@ -1,17 +1,26 @@
 import chokidar from 'chokidar';
 import { getFileChanges } from './commit-changes';
 import { projects } from './config.json';
-import { initDB } from './db';
+import { getDB, initDB, DB } from './db';
 import { writeText } from './fileio';
 import { getFilesToUpdate } from './main';
 
+import { diffTrimmedLines } from 'diff';
 async function start() {
   try {
     const { files, lines, tags } = await initDB();
+    const db: DB = getDB(files, lines);
     chokidar.watch(projects).on('change', async (filePath: string) => {
       //- get file changes
-      const changes = await getFileChanges(filePath);
-      const filesText = getFilesToUpdate(changes, filePath, lines, files, tags);
+      const changes = await getFileChanges(filePath, db);
+      const filesText = getFilesToUpdate(
+        changes,
+        filePath,
+        lines,
+        files,
+        tags,
+        db
+      );
       if (filesText) {
         const responses = await Promise.all(
           filesText.map((fileText) =>

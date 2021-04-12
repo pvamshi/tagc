@@ -110,3 +110,46 @@ export function addLine(line: Line, linesDB: Collection<Line>) {
   }
   return newLine;
 }
+
+export interface DB {
+  getLine(lineID: ID): LineDocument;
+  addLine(line: Line): LineDocument;
+  getFile($loki: ID, filesDB: Collection<File>): FileDocument;
+  createOrGetFile(filePath: string): FileDocument;
+}
+export function getDB(fileDB: Collection<File>, lineDB: Collection<Line>): DB {
+  return {
+    getLine: ($loki: ID) => {
+      const line = lineDB.findOne({ $loki });
+      if (!line) {
+        throw new Error('error while fetching line with id ' + $loki);
+      }
+      return line;
+    },
+    addLine: (line: Line) => {
+      const newLine = lineDB.insertOne(line);
+      if (!newLine) {
+        throw new Error('Error while adding new line');
+      }
+      return newLine;
+    },
+    getFile: ($loki: ID): FileDocument => {
+      const file = fileDB.findOne({ $loki });
+      if (!file) {
+        throw new Error('error while fetching file with id ' + $loki);
+      }
+      return file;
+    },
+    createOrGetFile(filePath: string): FileDocument {
+      const fileResults = fileDB.find({ filePath });
+      if (fileResults.length === 0) {
+        const newFile = fileDB.insertOne({ filePath, children: [] });
+        if (newFile === undefined) {
+          throw new Error('error while adding file');
+        }
+        return newFile;
+      }
+      return fileResults[0];
+    },
+  };
+}

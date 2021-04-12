@@ -1,13 +1,12 @@
-import { getFilesToUpdate, log } from '../main';
 import { Change } from '../commit-changes/models';
-import { Tags, File, Line } from '../db';
-import { prepareDB } from './lines.test';
 import {
   lineSeperator,
-  queryResultBorderStart,
   queryResultBorderEnd,
+  queryResultBorderStart,
 } from '../config.json';
-import { getFileText } from '../lines';
+import { DB, File, getDB, Line, Tags } from '../db';
+import { getFilesToUpdate } from '../main';
+import { prepareDB } from './lines.test';
 
 /** 
  * 
@@ -28,11 +27,13 @@ describe('main tests', () => {
   let filesDB: Collection<File>;
   let linesDB: Collection<Line>;
   let tagsDB: Collection<Tags>;
+  let db: DB;
   beforeAll(async () => {
-    const db = await prepareDB();
-    filesDB = db.files;
-    linesDB = db.lines;
-    tagsDB = db.tags;
+    const db1 = await prepareDB();
+    filesDB = db1.files;
+    linesDB = db1.lines;
+    tagsDB = db1.tags;
+    db = getDB(filesDB, linesDB);
   });
 
   test('simple scenario of single file with no tags and queries', () => {
@@ -46,7 +47,8 @@ describe('main tests', () => {
       newFileChanges(newFileContent),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
     expect(fileChanges.length).toBe(0);
   });
@@ -59,27 +61,23 @@ describe('main tests', () => {
     const fileChanges = runtest(
       'file1.md',
       new Map([
-        [
-          2,
-          [
-            { type: 'del', content: '' },
-            { type: 'add', content: '- line 2 #tag1' },
-          ],
-        ],
+        [2, [{ type: 'del' }, { type: 'add', content: ['- line 2 #tag1'] }]],
       ]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
     expect(fileChanges.length).toBe(1);
   });
   test('add a query and get file update', () => {
     const fileChanges = runtest(
       'file1.md',
-      new Map([[5, [{ type: 'add', content: '+tag1' }]]]),
+      new Map([[5, [{ type: 'add', content: ['+tag1'] }]]]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
     expect(fileChanges.length).toBe(1);
     expect(fileChanges[0].text).toBe(`
@@ -104,10 +102,11 @@ ${queryResultBorderEnd}`);
     // `;
     const fileChanges = runtest(
       'file1.md',
-      new Map([[3, [{ type: 'add', content: '- line 2.1 #tag1' }]]]),
+      new Map([[3, [{ type: 'add', content: ['- line 2.1 #tag1'] }]]]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
     expect(fileChanges.length).toBe(1);
     expect(fileChanges[0].text).toBe(`
@@ -127,11 +126,12 @@ ${queryResultBorderEnd}`);
   test('add a child to existing tag and existing query and get file update', () => {
     const fileChanges = runtest(
       'file1.md',
-      new Map([[4, [{ type: 'add', content: '  - line 2.1.1' }]]]),
+      new Map([[4, [{ type: 'add', content: ['  - line 2.1.1'] }]]]),
 
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
     expect(fileChanges.length).toBe(1);
     expect(fileChanges[0].text).toBe(`
@@ -154,10 +154,11 @@ ${queryResultBorderEnd}`);
   test('add a child to existing tag  with another tag and existing query ', () => {
     const fileChanges = runtest(
       'file1.md',
-      new Map([[5, [{ type: 'add', content: '  - line 2.1.2 #tag2' }]]]),
+      new Map([[5, [{ type: 'add', content: ['  - line 2.1.2 #tag2'] }]]]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
     expect(fileChanges.length).toBe(1);
     // console.log(fileChanges[0].text);
@@ -194,25 +195,14 @@ ${queryResultBorderEnd}`);
     const fileChanges = runtest(
       'file1.md',
       new Map([
-        [1, [{ type: 'add', content: '- line x #tag1 #tag2' }]],
-        [
-          8,
-          [
-            { type: 'del', content: '' },
-            { type: 'add', content: 'dummy text' },
-          ],
-        ],
-        [
-          9,
-          [
-            { type: 'del', content: '' },
-            { type: 'add', content: '+tag1 +tag2' },
-          ],
-        ],
+        [1, [{ type: 'add', content: ['- line x #tag1 #tag2'] }]],
+        [8, [{ type: 'del' }, { type: 'add', content: ['dummy text'] }]],
+        [9, [{ type: 'del' }, { type: 'add', content: ['+tag1 +tag2'] }]],
       ]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
 
     expect(fileChanges.length).toBe(1);
@@ -237,24 +227,13 @@ ${queryResultBorderEnd}`);
     const fileChanges = runtest(
       'file1.md',
       new Map([
-        [
-          10,
-          [
-            { type: 'del', content: '- line x #tag1 #tag2' },
-            { type: 'add', content: 'sdfasfsf' },
-          ],
-        ],
-        [
-          12,
-          [
-            { type: 'del', content: '- line x #tag1 #tag2' },
-            { type: 'add', content: 'sdfasfsf' },
-          ],
-        ],
+        [10, [{ type: 'del' }, { type: 'add', content: ['sdfasfsf'] }]],
+        [12, [{ type: 'del' }, { type: 'add', content: ['sdfasfsf'] }]],
       ]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
 
     expect(fileChanges.length).toBe(0);
@@ -265,7 +244,8 @@ ${queryResultBorderEnd}`);
       new Map([[9, [{ type: 'del', content: '- line x #tag1 #tag2' }]]]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
 
     expect(fileChanges.length).toBe(1);
@@ -281,7 +261,7 @@ ${queryResultBorderEnd}`);
 dummy text`);
   });
 
-  test.only('simple child tag with parent having hash should reflect in query response', () => {
+  test('simple child tag with parent having hash should reflect in query response', () => {
     const changes1 = newFileChanges(
       `- line 1
 - line 2 #tag
@@ -292,13 +272,14 @@ dummy text`);
   
 +tag`
     );
-    runtest('fil2.md', changes1, filesDB, linesDB, tagsDB);
+    runtest('fil2.md', changes1, filesDB, linesDB, tagsDB, db);
     const fileChanges = runtest(
       'fil2.md',
       new Map([[5, [{ type: 'del', content: 'sdsd' }]]]),
       filesDB,
       linesDB,
-      tagsDB
+      tagsDB,
+      db
     );
 
     expect(fileChanges[0].text).toEqual(
@@ -325,16 +306,29 @@ function runtest(
   changes: Map<number, Change[]>,
   filesDB: Collection<File>,
   linesDB: Collection<Line>,
-  tagsDB: Collection<Tags>
-) {
-  return getFilesToUpdate(changes, filePath, linesDB, filesDB, tagsDB);
+  tagsDB: Collection<Tags>,
+  db: DB
+): { filePath: string; text: string }[] {
+  try {
+    const fl = getFilesToUpdate(
+      changes,
+      filePath,
+      linesDB,
+      filesDB,
+      tagsDB,
+      db
+    );
+    if (fl) {
+      return fl;
+    }
+    return [];
+  } catch (err) {
+    return [];
+  }
 }
 
-function newFileChanges(fileText: string) {
-  return new Map(
-    fileText
-      .split(lineSeperator)
-      .map((content) => [{ type: 'add', content } as Change])
-      .entries()
-  );
+function newFileChanges(fileText: string): Map<number, Change[]> {
+  const m: Map<number, Change[]> = new Map();
+  m.set(0, [{ type: 'add', content: fileText.split(lineSeperator) } as Change]);
+  return m;
 }
