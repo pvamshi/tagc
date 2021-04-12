@@ -38,7 +38,7 @@ const grammar: Grammar = {
     {"name": "Hashtag$ebnf$1", "symbols": ["Hashtag$ebnf$1", /[\s\S]/], "postprocess": (d) => d[0].concat([d[1]])},
     {"name": "Hashtag$ebnf$2", "symbols": [/[\S]/]},
     {"name": "Hashtag$ebnf$2", "symbols": ["Hashtag$ebnf$2", /[\S]/], "postprocess": (d) => d[0].concat([d[1]])},
-    {"name": "Hashtag", "symbols": ["Hashtag$ebnf$1", "Tag", "Hashtag$ebnf$2", "Tail"], "postprocess": d=>({ type: d[1],value: d[2].join('') })},
+    {"name": "Hashtag", "symbols": ["Hashtag$ebnf$1", {"literal":" "}, "Tag", "Hashtag$ebnf$2", "Tail"], "postprocess": d=>({ type: d[2],value: d[3].join('') })},
     {"name": "Tag", "symbols": [{"literal":"#"}], "postprocess": d=> "hashtag"},
     {"name": "Tag", "symbols": [{"literal":"+"}], "postprocess": d=> "includeTag"},
     {"name": "Tag", "symbols": [{"literal":"-"}], "postprocess": d=> "excludeTag"},
