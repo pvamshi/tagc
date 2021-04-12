@@ -27,9 +27,7 @@
     "@types/jest": "^26.0.20",
     "@types/lodash": "^4.14.168",
     "@types/lokijs": "^1.5.3",
-    "@types/lowdb": "^1.0.9",
     "@types/nearley": "^2.11.1",
-    "@types/nedb": "^1.8.11",
     "@types/node": "^14.14.35",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
@@ -44,21 +42,10 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "@types/ramda": "^0.27.39",
     "chokidar": "^3.5.1",
     "diff": "^4.0.2",
-    "exec-sh": "^0.3.4",
     "glob": "^7.1.6",
-    "json-server": "^0.16.3",
-    "list": "^2.0.19",
     "lodash": "^4.17.21",
-    "lokijs": "^1.5.11",
-    "lowdb": "^1.0.0",
-    "nanoid": "^3.1.22",
-    "nedb": "^1.8.0",
-    "nedb-promises": "^4.1.1",
-    "parse-diff": "^0.8.1",
-    "ramda": "^0.27.1",
-    "rxjs": "^6.6.6"
+    "lokijs": "^1.5.11"
   }
 }
