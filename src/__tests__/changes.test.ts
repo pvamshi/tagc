@@ -1,10 +1,8 @@
-import { getChanges } from '..';
-import { lineSeperator } from '../../config.json';
-jest.mock('../utils');
+import { getChanges } from '../changes';
 
 const s = (str: TemplateStringsArray) => str[0].split('\n');
 
-describe.only('commit-changes', () => {
+describe('changes', () => {
   test('empty map when no changes', () => {
     const changes = getChanges(s`text1\ntext2\ntext3`, s`text1\ntext2\ntext3`);
     expect(changes.size).toBe(0);

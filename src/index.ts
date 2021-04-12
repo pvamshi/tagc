@@ -1,5 +1,5 @@
 import chokidar from 'chokidar';
-import { getFileChanges } from './commit-changes';
+import { getFileChanges } from './changes';
 import { projects } from './config.json';
 import { getDB, initDB, DB } from './db';
 import { writeText } from './fileio';

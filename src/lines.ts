@@ -1,7 +1,7 @@
 import { keyBy } from 'lodash';
 import { last } from 'lodash/fp';
 import nearley from 'nearley';
-import { AddChange, Change } from './commit-changes/models';
+import { AddChange, Change } from './changes';
 import {
   lineSeperator,
   queryResultBorderEnd,

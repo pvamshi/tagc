@@ -1,4 +1,4 @@
-import { Change } from '../commit-changes/models';
+import { Change } from '../changes';
 import {
   lineSeperator,
   queryResultBorderEnd,

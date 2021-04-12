@@ -1,4 +1,4 @@
-import { Change, ChangeOld } from './commit-changes/models';
+import { Change } from './changes';
 import { DB, File, Line, Tags } from './db';
 import {
   deleteLines,

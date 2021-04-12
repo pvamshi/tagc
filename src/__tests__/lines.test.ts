@@ -1,10 +1,8 @@
-import { AddChange, Change, DeleteChange } from '../commit-changes/models';
+import { AddChange, Change, DeleteChange } from '../changes';
 import { Line, Tags, File, getDB, DB } from '../db';
 import { updateLines, updateTreeStructure } from '../lines';
 import Loki from 'lokijs';
 import _ from 'lodash';
-import { getQueryResults } from '../query';
-// describe('lines', () => {
 describe('lines', () => {
   let lines: Collection<Line>;
   let files: Collection<File>;
